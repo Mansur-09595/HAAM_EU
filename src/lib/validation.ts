@@ -7,9 +7,13 @@ export const adSchema = z.object({
   currency: z.string().min(1, 'Укажите валюту'),
   category: z.string().min(1, 'Выберите категорию'),
   location: z.string().min(1, 'Укажите локацию'),
-  image: z
+  images: z
     .any()
-    .refine((file) => file?.length === 1, 'Загрузите одно изображение'),
+    .refine(
+      (files) => !files || files.length <= 10,
+      'Максимум 10 изображений'
+    )
+    .optional(),
 })
 
 export type AdFormData = z.infer<typeof adSchema>

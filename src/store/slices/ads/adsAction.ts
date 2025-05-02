@@ -10,22 +10,35 @@ export const fetchAds = createAsyncThunk('ads/fetchAds', async () => {
 })
 
 // ➕ Добавление объявления
-export const addAd = createAsyncThunk(
-  'ads/addAd',
-  async (newAd: { title: string; description: string; price: string; currency: string }) => {
-    const token = localStorage.getItem('accessToken')
-    const res = await fetch('http://localhost:8000/api/listings/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(newAd),
-    })
+export const addAd = createAsyncThunk('ads/addAd', async (newAd: FormData) => {
+  const token = localStorage.getItem('accessToken')
 
-    if (!res.ok) throw new Error('Ошибка при добавлении')
+  const res = await fetch('http://localhost:8000/api/listings/', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`, // не указываем Content-Type!
+    },
+    body: newAd,
+  })
 
-    const data = await res.json()
-    return data as Ads
+  if (!res.ok) {
+    const errorText = await res.text()
+    console.error('❌ Ошибка добавления:', errorText)
+    throw new Error('Ошибка при добавлении объявления')
+  }
+
+  return await res.json()
+})
+
+// 🔍 Поиск объявления по ID
+export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: string) => {
+    const res = await fetch(`http://localhost:8000/api/listings/${slug}/`)
+    if (res.status === 404) {
+      // можно вернуть null и отловить это на фронте
+      return null
+    }
+    if (!res.ok) throw new Error("Ошибка загрузки")
+    return (await res.json()) as Ads
   }
 )
+

@@ -49,7 +49,7 @@ export default function MyAdsPage() {
                   {ad.images.map((image, index) => (
                     <img
                       key={index}
-                      src={image.image} // ✅ правильное поле
+                      src={image.image}
                       alt={ad.title}
                       className="w-32 h-32 object-cover rounded"
                     />

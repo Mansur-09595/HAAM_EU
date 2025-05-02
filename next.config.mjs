@@ -2,11 +2,11 @@ let userConfig = undefined
 try {
   // try to import ESM first
   userConfig = await import('./v0-user-next.config.mjs')
-} catch (e) {
+} catch  {
   try {
     // fallback to CJS import
     userConfig = await import("./v0-user-next.config");
-  } catch (innerError) {
+  } catch {
     // ignore error
   }
 }
@@ -21,6 +21,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['localhost'],
   },
   experimental: {
     webpackBuildWorker: true,

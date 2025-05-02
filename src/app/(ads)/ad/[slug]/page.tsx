@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useParams, notFound } from 'next/navigation'
+import { useAppDispatch, useAppSelector } from "@/store/store"
+import { fetchAdBySlug } from "@/store/slices/ads/adsAction"
 import {
   ArrowLeft, Heart, Share2, Flag, MapPin,
   Calendar, MessageSquare, Phone, Shield, Eye
@@ -16,25 +18,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 // import SimilarListings from '@/components/similar-listings'
 
-import { Ads } from '@/types/IAds'
 
 export default function ListingDetailPage() {
-  const params = useParams()
-  const id = params?.id
-  const [listing, setListing] = useState<Ads | null>(null)
+  const { slug } = useParams()
+  const dispatch = useAppDispatch()
+
+  const { selectedAd: listing, loading, error } = useAppSelector(state => state.ads)
 
   useEffect(() => {
-    const fetchListing = async () => {
-      const res = await fetch(`http://localhost:8000/api/listings/${id}/`)
-      const data = await res.json()
-      setListing(data)
-    }
+    if (slug) dispatch(fetchAdBySlug(String(slug)))
+  }, [slug, dispatch])
 
-    if (id) fetchListing()
-  }, [id])
-
-  if (!listing) return <p className="p-4">Загрузка...</p>
-
+  if (loading) return <p>Загрузка...</p>
+  if (error === "Объявление не найдено") return notFound()
+  if (!listing) return null
+  
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Назад */}
@@ -87,9 +85,9 @@ export default function ListingDetailPage() {
               </div>
               {listing.images.slice(1).map((img, index) => (
                 <Image
-                  key={index}
+                  key={img.id || index}
                   src={img.image}
-                  alt={`${listing.title} ${index}`}
+                  alt={`${listing.title} ${index + 1}`}
                   width={400}
                   height={300}
                   className="w-full h-auto rounded-lg object-cover"
@@ -97,6 +95,7 @@ export default function ListingDetailPage() {
               ))}
             </div>
           </div>
+
 
           {/* Tabs */}
           <Tabs defaultValue="description" className="mb-8">

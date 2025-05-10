@@ -3,6 +3,7 @@ import favoritesReducer from './slices/favoritesSlice'
 import authReducer from './slices/auth/authSlice'
 import categoriesReducer from './slices/categories/categoriesSlice'
 import adsByCategoryReducer from './slices/categories/extracted/adsByCategorySlice'
+import usersReducer from './slices/auth/users/usersSlice'
 
 export const rootReducer = {
   favorites: favoritesReducer,
@@ -10,4 +11,5 @@ export const rootReducer = {
   auth: authReducer,
   categories: categoriesReducer,
   adsByCategory: adsByCategoryReducer,
+  users: usersReducer,
 }

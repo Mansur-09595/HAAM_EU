@@ -10,25 +10,40 @@ export const fetchAds = createAsyncThunk('ads/fetchAds', async () => {
 })
 
 // ➕ Добавление объявления
-export const addAd = createAsyncThunk('ads/addAd', async (newAd: FormData) => {
-  const token = localStorage.getItem('accessToken')
+export const addAd = createAsyncThunk<
+  Ads,          // возвращаем тип объявления
+  FormData,     // аргумент — FormData
+  { rejectValue: string }
+>(
+  'ads/addAd',
+  async (newAd, { rejectWithValue }) => {
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      // нет токена вообще
+      return rejectWithValue('Пожалуйста, войдите, чтобы добавить объявление')
+    }
 
-  const res = await fetch('http://localhost:8000/api/listings/', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`, // не указываем Content-Type!
-    },
-    body: newAd,
-  })
+    const res = await fetch('http://localhost:8000/api/listings/', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: newAd,
+    })
 
-  if (!res.ok) {
-    const errorText = await res.text()
-    console.error('❌ Ошибка добавления:', errorText)
-    throw new Error('Ошибка при добавлении объявления')
+    const data = await res.json()
+    if (!res.ok) {
+      // 401/403 → неавторизован
+      if (res.status === 401 || res.status === 403) {
+        return rejectWithValue('Пожалуйста, войдите, чтобы добавить объявление')
+      }
+      // остальные ошибки API
+      return rejectWithValue(data.detail || 'Ошибка при добавлении объявления')
+    }
+
+    return data as Ads
   }
-
-  return await res.json()
-})
+)
 
 // 🔍 Поиск объявления по ID
 export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: string) => {

@@ -66,7 +66,7 @@ const adsSlice = createSlice({
       })
       .addCase(addAd.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Ошибка добавления'
+        state.error = action.payload ?? action.error.message ?? 'Ошибка добавления'
       })
 
       // Загрузка одного объявления по слагу

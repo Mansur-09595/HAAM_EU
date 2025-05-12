@@ -1,9 +1,11 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { Ads } from '@/types/IAds' // Импортируем тип объявления
 
+const API_BASE = 'http://localhost:8000/api'
+
 // 🔁 Загрузка всех объявлений
 export const fetchAds = createAsyncThunk('ads/fetchAds', async () => {
-  const res = await fetch('http://localhost:8000/api/listings/')
+  const res = await fetch(`${API_BASE}/listings/`)
   if (!res.ok) throw new Error('Ошибка при загрузке')
   const data = await res.json()
   return data.results as Ads[]
@@ -23,7 +25,7 @@ export const addAd = createAsyncThunk<
       return rejectWithValue('Пожалуйста, войдите, чтобы добавить объявление')
     }
 
-    const res = await fetch('http://localhost:8000/api/listings/', {
+    const res = await fetch(`${API_BASE}/listings/`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -47,7 +49,7 @@ export const addAd = createAsyncThunk<
 
 // 🔍 Поиск объявления по ID
 export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: string) => {
-    const res = await fetch(`http://localhost:8000/api/listings/${slug}/`)
+    const res = await fetch(`${API_BASE}/listings/${slug}/`)
     if (res.status === 404) {
       // можно вернуть null и отловить это на фронте
       return null
@@ -57,3 +59,27 @@ export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: st
   }
 )
 
+//VIP-статус объявления
+export const toggleFeatured = createAsyncThunk<
+  Ads,
+  { id: number; is_featured: boolean },
+  { rejectValue: string }
+>(
+  'ads/toggleFeatured',
+  async ({ id, is_featured }, { rejectWithValue }) => {
+    const token = localStorage.getItem('accessToken')
+    const res = await fetch(`${API_BASE}/listings/${id}/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ is_featured }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      return rejectWithValue(data.detail ?? 'Не удалось обновить VIP-статус')
+    }
+    return data as Ads
+  }
+)

@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { fetchBelgianCities } from '@/store/slices/cities/citiesAction'
 
 const CURRENCIES = [
   { value: "EUR", label: "Euro (€)" },
@@ -29,7 +30,11 @@ export default function CreateAdPage() {
   const dispatch = useAppDispatch()
   const router = useRouter()
   const { toast } = useToast()
-  const categories = useAppSelector((state) => state.categories.items)
+  const categories = useAppSelector(state => state.categories.items)
+  const { items: cities, loading: citiesLoading } = useAppSelector(state => state.cities)
+  const uniqueCities = cities.filter(
+    (c, i, arr) => arr.findIndex(x => x.name === c.name) === i
+  );
 
   const {
     register,
@@ -40,46 +45,44 @@ export default function CreateAdPage() {
   } = useForm<AdFormData>({
     resolver: zodResolver(adSchema),
     defaultValues: {
-      currency: "RUB",
+      currency: 'RUB',
+      location: '',
     },
   })
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [imagesPreview, setImagesPreview] = useState<string[]>([])
-  const descriptionLength = watch("description")?.length || 0
+  const descriptionLength = watch('description')?.length || 0
 
-  // Очистка URL объектов при размонтировании компонента
+  // load categories & cities
   useEffect(() => {
-    return () => {
-      imagesPreview.forEach((url) => URL.revokeObjectURL(url))
-    }
-  }, [])
+    dispatch(fetchBelgianCities())
+  }, [dispatch])
+
+  // cleanup previews
+  useEffect(() => {
+    return () => imagesPreview.forEach(url => URL.revokeObjectURL(url))
+  }, [imagesPreview])
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
-
     const fileArray = Array.from(files).slice(0, 10 - selectedFiles.length)
-    setSelectedFiles((prev) => [...prev, ...fileArray].slice(0, 10))
-
-    const previews = fileArray.map((file) => URL.createObjectURL(file))
-    setImagesPreview((prev) => [...prev, ...previews].slice(0, 10))
-
-    // Сбрасываем значение input, чтобы можно было выбрать тот же файл снова
-    e.target.value = ""
+    setSelectedFiles(prev => [...prev, ...fileArray].slice(0, 10))
+    const previews = fileArray.map(file => URL.createObjectURL(file))
+    setImagesPreview(prev => [...prev, ...previews].slice(0, 10))
+    e.target.value = ''
   }
 
-  const handleRemoveImage = (index: number, srcToRemove: string) => {
-    URL.revokeObjectURL(srcToRemove)
-    setImagesPreview((prev) => prev.filter((_, i) => i !== index))
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+  const handleRemoveImage = (index: number, src: string) => {
+    URL.revokeObjectURL(src)
+    setImagesPreview(prev => prev.filter((_, i) => i !== index))
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleCancel = () => {
-    if (isDirty && !window.confirm("У вас есть несохраненные изменения. Вы уверены, что хотите покинуть страницу?")) {
-      return
-    }
+    if (isDirty && !window.confirm('Есть несохранённые изменения. Уйти?')) return
     router.back()
   }
 
@@ -124,77 +127,84 @@ export default function CreateAdPage() {
       <Card className="max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>Создать объявление</CardTitle>
-          <CardDescription>Заполните форму, чтобы опубликовать объявление</CardDescription>
+          <CardDescription>Заполните форму</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
           <CardContent className="space-y-6">
+            {/* Заголовок */}
             <div>
               <Label htmlFor="title">Заголовок</Label>
-              <Input id="title" {...register("title")} placeholder="Кратко опишите что вы продаете" />
-              {errors.title && <p className="text-sm text-red-500">{String(errors.title.message)}</p>}
+              <Input id="title" {...register('title')} />
+              {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
             </div>
 
+            {/* Описание */}
             <div>
               <div className="flex justify-between">
                 <Label htmlFor="description">Описание</Label>
-                <span className="text-xs text-muted-foreground">{descriptionLength}/500</span>
+                <span className="text-xs">{descriptionLength}/500</span>
               </div>
-              <Textarea
-                id="description"
-                rows={5}
-                {...register("description")}
-                maxLength={500}
-                placeholder="Подробно опишите ваш товар или услугу"
-              />
-              {errors.description && <p className="text-sm text-red-500">{String(errors.description.message)}</p>}
+              <Textarea id="description" rows={5} {...register('description')} maxLength={500} />
+              {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
             </div>
 
+            {/* Цена и Валюта */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="price">Цена</Label>
-                <Input id="price" type="number" {...register("price", { valueAsNumber: true })} placeholder="0.00" />
-                {errors.price && <p className="text-sm text-red-500">{String(errors.price.message)}</p>}
+                <Input id="price" type="number" {...register('price', { valueAsNumber: true })} />
+                {errors.price && <p className="text-red-500 text-sm">{errors.price.message}</p>}
               </div>
               <div>
-                <Label htmlFor="currency">Валюта</Label>
-                <Select onValueChange={(val) => setValue("currency", val)} defaultValue="RUB">
+                <Label>Валюта</Label>
+                <Select onValueChange={val => setValue('currency', val)} defaultValue="RUB">
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите валюту" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CURRENCIES.map((currency) => (
-                      <SelectItem key={currency.value} value={currency.value}>
-                        {currency.label}
-                      </SelectItem>
+                    {CURRENCIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.currency && <p className="text-sm text-red-500">{String(errors.currency.message)}</p>}
               </div>
             </div>
 
+            {/* Категория */}
             <div>
               <Label>Категория</Label>
-              <Select onValueChange={(val) => setValue("category", val)} defaultValue="">
+              <Select onValueChange={val => setValue('category', val)} defaultValue="">
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите категорию" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.isArray(categories) &&
-                    categories.map((cat) => (
-                      <SelectItem key={cat.id} value={String(cat.id)}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {errors.category && <p className="text-sm text-red-500">{String(errors.category.message)}</p>}
+              {errors.category && <p className="text-red-500 text-sm">{errors.category.message}</p>}
             </div>
 
+            {/* Локация */}
             <div>
-              <Label>Локация</Label>
-              <Input placeholder="Например: Москва" {...register("location")} />
-              {errors.location && <p className="text-sm text-red-500">{String(errors.location.message)}</p>}
+              <Label>Город</Label>
+              <Select onValueChange={val => setValue('location', val)} defaultValue="" disabled={citiesLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder={citiesLoading ? 'Загрузка городов...' : 'Выберите город'} />
+                </SelectTrigger>
+                <SelectContent>
+                {uniqueCities.map((city, idx) => (
+                  <SelectItem
+                    key={`${city.name}-${city.admin}-${idx}`}   // ← very unlikely to collide
+                    value={city.name}
+                  >
+                    {city.name} ({city.admin})
+                  </SelectItem>
+                ))}
+                </SelectContent>
+              </Select>
+              {errors.location && <p className="text-red-500 text-sm">{errors.location.message}</p>}
             </div>
 
             <div>

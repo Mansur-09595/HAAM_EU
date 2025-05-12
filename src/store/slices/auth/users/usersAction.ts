@@ -92,20 +92,25 @@ export const deleteUser = createAsyncThunk<number, number, { rejectValue: string
 // POST /api/users/
 export const createUser = createAsyncThunk<
   Users,
-  Omit<Users, 'id'> & { password: string },
+  FormData,
   { rejectValue: string }
 >(
   'users/create',
-  async (userData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue }) => {
     const res = await fetch(`${API_BASE}/users/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData),
+      // ↘ НЕ указываем Content-Type — fetch сам добавит multipart boundary
+      body: formData,
     })
-    const data = (await res.json()) as Users & { detail?: string }
+    const data = await res.json()
     if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось создать пользователя')
+      console.log('CreateUser errors:', data)
+      // собираем сообщения из объекта ошибок
+      const message = typeof data === 'object'
+        ? Object.values(data).flat().join('; ')
+        : data.detail || 'Не удалось создать пользователя'
+      return rejectWithValue(message)
     }
-    return data
+    return data as Users
   }
 )

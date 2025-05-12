@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, Suspense } from 'react'
+import Link from "next/link"
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { fetchAds } from '@/store/slices/ads/adsAction'
 import { setSearchTerm, setMinPrice, setMaxPrice } from '@/store/slices/ads/adsSlice'
@@ -10,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Search } from 'lucide-react'
 import ListingGrid from '@/components/ListingGrid'
 import CategoryList from '@/components/CategoryList'
+import FeaturedListingsVIP from '@/components/FeaturedListingsVIP'
 
 export default function HomePage() {
   const dispatch = useAppDispatch()
@@ -83,10 +85,13 @@ export default function HomePage() {
       <section className="mb-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">VIP объявления</h2>
-          <span className="text-blue-600">Смотреть все</span>
+          <Link href="/listings/featured" className="text-blue-600 hover:underline">
+            Смотреть все
+          </Link>
         </div>
-        {/* TODO: FeaturedListings */}
-        <Skeleton className="h-64 w-full rounded-lg" />
+        <Suspense fallback={<FeaturedListingsSkeleton />}>
+          <FeaturedListingsVIP />
+        </Suspense>
       </section>
 
 
@@ -141,6 +146,18 @@ function ListingGridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {Array(8)
+        .fill(0)
+        .map((_, i) => (
+          <Skeleton key={i} className="h-64 w-full rounded-lg" />
+        ))}
+    </div>
+  )
+}
+
+function FeaturedListingsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {Array(3)
         .fill(0)
         .map((_, i) => (
           <Skeleton key={i} className="h-64 w-full rounded-lg" />

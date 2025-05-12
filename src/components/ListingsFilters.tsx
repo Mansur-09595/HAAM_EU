@@ -4,6 +4,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { fetchCategories } from '@/store/slices/categories/categoriesAction' // Правильный импорт
+import { fetchBelgianCities } from '@/store/slices/cities/citiesAction'      // <-- добавили импорт
 import { setSearchTerm, setMinPrice, setMaxPrice } from '@/store/slices/ads/adsSlice'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,9 @@ export default function ListingFilters({ onFilter }: ListingFiltersProps) {
   const { items: ads, searchTerm, minPrice, maxPrice } = useAppSelector(s => s.ads)
   const { items: categories } = useAppSelector(s => s.categories)
 
+  const { items: cities, loading: citiesLoading } = useAppSelector(s => s.cities)   // <-- читаем из state.cities
+
+
   // Локальные UI-стейты
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedCity, setSelectedCity] = useState<string>('')
@@ -48,14 +52,15 @@ export default function ListingFilters({ onFilter }: ListingFiltersProps) {
   // При монтировании грузим только категории
   useEffect(() => {
     dispatch(fetchCategories())
+    dispatch(fetchBelgianCities()) 
   }, [dispatch])
 
   // Собираем список уникальных городов из загруженных ads
-  const cities = useMemo(() => {
-    const setCity = new Set<string>()
-    ads.forEach(ad => setCity.add(ad.location))
-    return Array.from(setCity)
-  }, [ads])
+  // const cities = useMemo(() => {
+  //   const setCity = new Set<string>()
+  //   ads.forEach(ad => setCity.add(ad.location))
+  //   return Array.from(setCity)
+  // }, [ads])
 
   // Флаги активности
   const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -193,23 +198,43 @@ export default function ListingFilters({ onFilter }: ListingFiltersProps) {
               </PopoverTrigger>
               <PopoverContent className="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="Поиск города..." />
-                  <CommandEmpty>Не найдено</CommandEmpty>
                   <CommandList>
                     <CommandGroup>
-                      {cities.map(city => (
-                        <CommandItem
-                          key={city}
-                          value={city}
-                          onSelect={val => {
-                            setSelectedCity(val === selectedCity ? '' : val)
-                            setOpenCity(false)
-                          }}
-                        >
-                          <Check className={`mr-2 h-4 w-4 ${selectedCity === city ? 'opacity-100' : 'opacity-0'}`} />
-                          {city}
-                        </CommandItem>
-                      ))}
+                      {citiesLoading
+                        ? <p>Загрузка городов…</p>
+                        : (
+                          <Command>
+                            <CommandInput placeholder="Поиск города..." />
+                            <CommandEmpty>Не найдено</CommandEmpty>
+                            <CommandList>
+                              <CommandGroup>
+                                <CommandItem
+                                  value=""
+                                  onSelect={() => {
+                                    setSelectedCity('')
+                                    setOpenCity(false)
+                                  }}
+                                >
+                                  Все города
+                                </CommandItem>
+                                {cities.map((city, i) => (
+                                  <CommandItem
+                                    key={`${city.name}-${city.admin}-${i}`}
+                                    value={city.name}
+                                    onSelect={val => {
+                                      setSelectedCity(val === selectedCity ? '' : val)
+                                      setOpenCity(false)
+                                    }}
+                                  >
+                                    <Check className={`mr-2 h-4 w-4 ${selectedCity === city.name ? 'opacity-100' : 'opacity-0'}`} />
+                                    {city.name} ({city.admin})
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        )
+                      }
                     </CommandGroup>
                   </CommandList>
                 </Command>

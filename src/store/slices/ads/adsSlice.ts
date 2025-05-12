@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { fetchAds, addAd, fetchAdBySlug } from './adsAction' // Импортируем функции для работы с API
+import { fetchAds, addAd, fetchAdBySlug, toggleFeatured } from './adsAction' // Импортируем функции для работы с API
 import { Ads } from '@/types/IAds' // Импортируем тип объявления
 
 // Состояние для объявлений
@@ -85,6 +85,11 @@ const adsSlice = createSlice({
       .addCase(fetchAdBySlug.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Ошибка загрузки объявления'
+      })
+      .addCase(toggleFeatured.fulfilled, (state, action: PayloadAction<Ads>) => {
+        state.items = state.items.map(ad =>
+          ad.id === action.payload.id ? action.payload : ad
+        )
       })
   },
 })

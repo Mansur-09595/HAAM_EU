@@ -1,5 +1,6 @@
 'use client'
 
+import Link from "next/link"
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { loginUser } from '@/store/slices/auth/authAction'
 import { useRouter } from 'next/navigation'
@@ -54,6 +55,18 @@ export default function LoginPage() {
         >
           {loading ? 'Входим...' : 'Войти'}
         </button>
+        {loading ? (
+          <div className="bg-green-600 text-white px-4 py-2 rounded w-full text-center opacity-50 cursor-not-allowed">
+            Регистрация...
+          </div>
+          ) : (
+          <Link
+            href="/users/new"
+            className="block w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-center"
+          >
+            Зарегистрироваться
+          </Link>
+        )}
       </form>
     </main>
   )

@@ -10,7 +10,9 @@ import { adSchema, type AdFormData } from "@/lib/validation"
 import { useToast } from "@/hooks/use-toast"
 import { useAppDispatch, useAppSelector } from "@/store/store"
 import { addAd } from "@/store/slices/ads/adsAction"
-import { Camera, X, Loader2 } from "lucide-react"
+import { Camera, X, Loader2, ChevronDown } from "lucide-react"
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,9 +34,6 @@ export default function CreateAdPage() {
   const { toast } = useToast()
   const categories = useAppSelector(state => state.categories.items)
   const { items: cities, loading: citiesLoading } = useAppSelector(state => state.cities)
-  const uniqueCities = cities.filter(
-    (c, i, arr) => arr.findIndex(x => x.name === c.name) === i
-  );
 
   const {
     register,
@@ -54,6 +53,8 @@ export default function CreateAdPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [imagesPreview, setImagesPreview] = useState<string[]>([])
   const descriptionLength = watch('description')?.length || 0
+  const [openCity, setOpenCity] = useState(false)
+  const selectedCity = watch('location')
 
   // load categories & cities
   useEffect(() => {
@@ -188,23 +189,49 @@ export default function CreateAdPage() {
 
             {/* Локация */}
             <div>
-              <Label>Город</Label>
-              <Select onValueChange={val => setValue('location', val)} defaultValue="" disabled={citiesLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder={citiesLoading ? 'Загрузка городов...' : 'Выберите город'} />
-                </SelectTrigger>
-                <SelectContent>
-                {uniqueCities.map((city, idx) => (
-                  <SelectItem
-                    key={`${city.name}-${city.admin}-${idx}`}   // ← very unlikely to collide
-                    value={city.name}
+              <Label htmlFor="location">Город</Label>
+              <Popover open={openCity} onOpenChange={setOpenCity}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="location"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={openCity}
+                    className="w-full justify-between mt-2"
                   >
-                    {city.name} ({city.admin})
-                  </SelectItem>
-                ))}
-                </SelectContent>
-              </Select>
-              {errors.location && <p className="text-red-500 text-sm">{errors.location.message}</p>}
+                    {selectedCity || (citiesLoading ? 'Загрузка…' : 'Выберите город')}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-full p-0 max-h-60 overflow-y-auto">
+                  {citiesLoading ? (
+                    <p className="p-4 text-center text-sm">Загрузка городов…</p>
+                  ) : (
+                    <Command>
+                      <CommandInput placeholder="Поиск города…" />
+                      <CommandEmpty>Ничего не найдено.</CommandEmpty>
+                      <CommandGroup>
+                        {cities.map((city, idx) => (
+                          <CommandItem
+                            key={`${city.name}-${city.admin}-${idx}`}
+                            value={city.name}
+                            onSelect={(val) => {
+                              setValue('location', val)
+                              setOpenCity(false)
+                            }}
+                          >
+                            {city.name} ({city.admin})
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  )}
+                </PopoverContent>
+              </Popover>
+              {errors.location && (
+                <p className="text-red-500 text-sm mt-1">{errors.location.message}</p>
+              )}
             </div>
 
             <div>

@@ -1,0 +1,9 @@
+.devcontainer
+env
+.env
+/.devcontainer
+/env
+/.env
+/.devcontainer/
+/env/
+/.env/

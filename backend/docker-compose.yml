@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:14
+    container_name: avito_postgres
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: avito_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  web:
+    container_name: avito_web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "
+        python manage.py makemigrations &&
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        daphne -b 0.0.0.0 -p 8000 config.asgi:application
+      "
+    volumes:
+      - .:/backend
+      - static_volume:/backend/staticfiles
+      - media_volume:/backend/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+
+  celery:
+    container_name: avito_celery
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A config worker -l INFO
+    volumes:
+      - .:/backend
+    depends_on:
+      - web
+      - redis
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+
+  celery-beat:
+    container_name: avito_celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A config beat -l INFO
+    volumes:
+      - .:/backend
+    depends_on:
+      - web
+      - redis
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -4,26 +4,75 @@ import { Ads } from '@/types/IAds' // Импортируем тип объявл
 const API_BASE = 'http://localhost:8000/api'
 
 // 🔁 Загрузка всех объявлений
-const PAGE_SIZE = 8  // или 10, как хотите
-
 export const fetchAds = createAsyncThunk<
+  { results: Ads[]; count: number; next: string | null; previous: string | null },
   {
-    results: Ads[]
-    count: number
-    next: string | null
-    previous: string | null
+    page?: number
+    category?: string
+    city?: string
+    searchTerm?: string
+    minPrice?: number
+    maxPrice?: number
+    append?: boolean
   },
-  { page?: number; append?: boolean },
   { rejectValue: string }
 >(
   'ads/fetchAds',
-  async ({ page = 1 }, { rejectWithValue }) => {
-    const res = await fetch(
-      `${API_BASE}/listings/?page=${page}&page_size=${PAGE_SIZE}`
-    )
-    const data = await res.json()
-    if (!res.ok) return rejectWithValue(data.detail || 'Ошибка при загрузке')
-    return data
+  async (
+    {
+      page = 1,
+      category,
+      city,
+      searchTerm,
+      minPrice,
+      maxPrice,
+    },
+    { rejectWithValue }
+  ) => {
+    const params = new URLSearchParams()
+    params.set('page', String(page))
+    params.set('page_size', String(8))
+    if (category) params.set('category_slug', category)
+    if (city) params.set('location', city)
+    if (searchTerm) params.set('searchTerm', searchTerm)
+    if (minPrice !== undefined) params.set('minPrice', String(minPrice))
+    if (maxPrice !== undefined) params.set('maxPrice', String(maxPrice))
+
+    const res = await fetch(`${API_BASE}/listings/?${params.toString()}`)
+     // Если ответ не OK, читаем текст (HTML или сообщение об ошибке)
+     if (!res.ok) {
+      const text = await res.text()
+      console.error('Ошибка при fetchAds:', text)
+      return rejectWithValue(
+        `Ошибка ${res.status} ${res.statusText}`
+      )
+    }
+
+    // Если OK, пробуем распарсить JSON
+    let data: { results: Ads[]; count: number; next: string | null; previous: string | null }
+    try {
+      data = await res.json()
+    } catch (err) {
+      console.error('Не удалось распарсить JSON:', err)
+      return rejectWithValue('Неверный формат ответа от сервера')
+    }
+
+    // Убедимся, что данные в ожидаемой структуре
+    if (
+      !data ||
+      !Array.isArray(data.results) ||
+      typeof data.count !== 'number'
+    ) {
+      console.error('Неожиданная структура данных:', data)
+      return rejectWithValue('Неожиданная структура данных от сервера')
+    }
+
+    return data as {
+      results: Ads[]
+      count: number
+      next: string | null
+      previous: string | null
+    }
   }
 )
 

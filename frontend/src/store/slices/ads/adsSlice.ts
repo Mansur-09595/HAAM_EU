@@ -6,45 +6,66 @@ import { Ads } from '@/types/IAds' // Импортируем тип объявл
 interface AdsState {
   items: Ads[]
   selectedAd: Ads | null  // Хранит единичное объявление при детальном просмотре
-  loading: boolean
-  error: string | null
-  searchTerm: string
-  minPrice: number
-  maxPrice: number
-  category: number
   count: number
   next: string | null
   previous: string | null
   page: number
+  loading: boolean
+  error: string | null
+
+  // фильтры
+  category: string
+  city: string
+  searchTerm: string
+  minPrice: number
+  maxPrice: number
 }
 
 const initialState: AdsState = {
   items: [],
-  selectedAd: null,
-  loading: false,
-  error: null,
-  searchTerm: '',
-  minPrice: 0,
-  maxPrice: 1000000,
-  category: 0,
   count: 0,
+  selectedAd: null,
   next: null,
   previous: null,
   page: 1,
+  loading: false,
+  error: null,
+
+  category: '',
+  city: '',
+  searchTerm: '',
+  minPrice: 0,
+  maxPrice: 1000000,
 }
 
 const adsSlice = createSlice({
   name: 'ads',
   initialState,
   reducers: {
+    setCategory: (state, action: PayloadAction<string>) =>{
+      state.category = action.payload; state.page = 1;
+    },
+    setCity: (state, action: PayloadAction<string>) =>{
+      state.city = action.payload; state.page = 1;
+    },
     setSearchTerm: (state, action: PayloadAction<string>) => {
-      state.searchTerm = action.payload
+      state.searchTerm = action.payload; state.page = 1;
     },
     setMinPrice: (state, action: PayloadAction<number>) => {
-      state.minPrice = action.payload
+      state.minPrice = action.payload; state.page = 1;
     },
     setMaxPrice: (state, action: PayloadAction<number>) => {
-      state.maxPrice = action.payload
+      state.maxPrice = action.payload; state.page = 1;
+    },
+    setPage: (state, action: PayloadAction<number>) => {
+      state.page = action.payload
+    },
+
+    clearFilters(state) {
+      state.category = ''
+      state.searchTerm = ''
+      state.minPrice = 0
+      state.maxPrice = 1_000_000
     },
   },
   extraReducers: builder => {
@@ -119,5 +140,5 @@ const adsSlice = createSlice({
   },
 })
 
-export const { setSearchTerm, setMinPrice, setMaxPrice } = adsSlice.actions
+export const { setCategory, setCity, setSearchTerm, setMinPrice, setMaxPrice, setPage, clearFilters } = adsSlice.actions
 export default adsSlice.reducer

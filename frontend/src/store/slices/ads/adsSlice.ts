@@ -4,8 +4,8 @@ import { Ads } from '@/types/IAds' // Импортируем тип объявл
 
 // Состояние для объявлений
 interface AdsState {
-  items: Ads[]
-  selectedAd: Ads | null  // Хранит единичное объявление при детальном просмотре
+  items: Ads[]           // публичные объявления (т. е. для страницы «Все объявления»)
+  selectedAd: Ads | null // для детального просмотра
   count: number
   next: string | null
   previous: string | null
@@ -23,8 +23,8 @@ interface AdsState {
 
 const initialState: AdsState = {
   items: [],
-  count: 0,
   selectedAd: null,
+  count: 0,
   next: null,
   previous: null,
   page: 1,
@@ -90,11 +90,16 @@ const adsSlice = createSlice({
         state.previous = previous
         state.page = page
 
-        // если append=true и page>1 — дописываем, иначе заменяем
+       // 1) Отфильтруем из пришедших results все объявления, где status === 'archived'
+        const incomingNotArchived = results.filter(ad => ad.status !== 'archived');
+
         if (append && page > 1) {
-          state.items = [...state.items, ...results]
+          // 2) Если мы “дописываем” (append === true и page>1), то добавляем к уже имеющимся в state.items
+          //    только непроархивированные объявления из следующей страницы
+          state.items = [...state.items, ...incomingNotArchived];
         } else {
-          state.items = results
+          // 3) Иначе (первый запрос или без append) — полностью заменяем state.items на непроархивированные:
+          state.items = incomingNotArchived;
         }
       })
       .addCase(fetchAds.rejected, (state, action) => {

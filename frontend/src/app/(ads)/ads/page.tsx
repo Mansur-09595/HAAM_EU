@@ -22,7 +22,7 @@ export default function ListingsPage() {
     searchTerm,
     minPrice,
     maxPrice,
-  } = useAppSelector(s => s.ads)
+  } = useAppSelector(state  => state.ads)
 
   const PAGE_SIZE = 8
   const totalPages = Math.ceil(count / PAGE_SIZE)

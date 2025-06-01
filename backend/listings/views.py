@@ -173,9 +173,9 @@ class ListingImageViewSet(viewsets.ModelViewSet):
             buf = BytesIO()
             img.save(buf, format='JPEG')
             content = ContentFile(buf.getvalue(), name=image_file.name)
-            serializer.save(image=content)
+            serializer.save(listing=listing, image=content)
         else:
-            serializer.save()
+            serializer.save(listing=listing)
 
 
 class ListingVideoViewSet(viewsets.ModelViewSet):

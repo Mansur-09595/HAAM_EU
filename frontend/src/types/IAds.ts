@@ -42,7 +42,7 @@ export interface Ads {
     bio: string
     date_joined: string
   }
-  status: 'active' | 'inactive' | string
+  status: 'active' | 'archived' | string
   is_featured: boolean
   view_count: number
   created_at: string

@@ -110,7 +110,7 @@ export default function CreateAdPage() {
       if (result?.slug) {
         router.push(`/ad/${result.slug}`)
       } else {
-        router.push("/listings")
+        router.push("/ads")
       }
     } catch (error) {
       toast({

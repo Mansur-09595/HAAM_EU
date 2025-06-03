@@ -2,17 +2,15 @@ import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
-import chat.routing
+import chat.routing  # ваш файл chat/routing.py
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
-# ⚠️ Получаем обычное Django-приложение СИНХРОННО
+# Это стандартный синхронный Django-код (HTTP-запросы)
 django_asgi_app = get_asgi_application()
 
 application = ProtocolTypeRouter({
-    # ✅ Все обычные HTTP-запросы обрабатываются как sync
-    "http": django_asgi_app,
-    # ✅ WebSocket только тут работает как async
+    "http": django_asgi_app,  # все HTTP обрабатывает Django, как обычно
     "websocket": AuthMiddlewareStack(
         URLRouter(
             chat.routing.websocket_urlpatterns

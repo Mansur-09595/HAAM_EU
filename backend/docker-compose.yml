@@ -1,21 +1,25 @@
+# docker-compose.yml
 version: '3.9'
 
 services:
+
+  # 1) PostgreSQL
   db:
     image: postgres:14
     container_name: avito_postgres
     restart: unless-stopped
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
     env_file:
       - .env
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
 
+  # 2) Redis (брокер сообщений для Celery и Channels)
   redis:
     image: redis:7
     container_name: avito_redis
@@ -23,6 +27,7 @@ services:
     ports:
       - "6379:6379"
 
+  # 3) Django + Daphne (ASGI)
   web:
     container_name: avito_web
     build:
@@ -30,11 +35,12 @@ services:
       dockerfile: Dockerfile
     command: >
       sh -c "
-        python manage.py makemigrations &&
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        daphne -b 0.0.0.0 -p 8000 config.asgi:application
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      daphne -b 0.0.0.0 -p 8000 config.asgi:application
       "
+    # ─── Монтируем локальный бэкенд внутрь контейнера ───
     volumes:
       - .:/backend
       - static_volume:/backend/staticfiles
@@ -48,14 +54,18 @@ services:
     env_file:
       - .env
     environment:
+      # обязательно указываем, где найти настройки
       - DJANGO_SETTINGS_MODULE=config.settings
+      # Celery–переменная (если вы хотите, можно добавить REDIS_URL сюда)
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
 
+  # 4) Celery Worker
   celery:
     container_name: avito_celery
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A config worker -l INFO
+    command: celery -A config worker --loglevel=INFO
     volumes:
       - .:/backend
     depends_on:
@@ -66,13 +76,16 @@ services:
       - .env
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
+      # Убедитесь, что эта переменная берётся из .env:
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
 
+  # 5) Celery Beat (планировщик периодических задач)
   celery-beat:
     container_name: avito_celery_beat
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A config beat -l INFO
+    command: celery -A config beat --loglevel=INFO
     volumes:
       - .:/backend
     depends_on:
@@ -83,7 +96,9 @@ services:
       - .env
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
 
+# Общие именованные тома
 volumes:
   postgres_data:
   static_volume:

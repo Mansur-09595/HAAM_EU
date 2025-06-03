@@ -2,25 +2,12 @@
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-const API_BASE = "http://localhost:8000/api";  // базовый путь до вашего DRF
+const API_BASE = "http://localhost:8000/api";  // базовый путь до DRF
 
 interface ErrorResponse {
   detail?: string;
 }
 
-/**
- * 1) Добавление нового изображения (POST /api/listings/images/)
- *
- *    FormData должен содержать:
- *      - listing: строковое представление ID объявления (integer)
- *      - image: сам File
- *
- *    Пример вызова:
- *      const fd = new FormData();
- *      fd.append("listing", String(listingId));
- *      fd.append("image", file);
- *      dispatch(addListingImage({ formData: fd }));
- */
 export const addListingImage = createAsyncThunk<
   { id: number; image: string; is_primary: boolean; created_at: string },
   { formData: FormData },
@@ -71,9 +58,8 @@ export const addListingImage = createAsyncThunk<
   }
 );
 
-/**
- * 2) Удаление существующего изображения (DELETE /api/listings/images/{id}/)
- */
+
+//2) Удаление существующего изображения (DELETE /api/listings/images/{id}/)
 export const deleteListingImage = createAsyncThunk<
   number,                // вернёт просто ID удалённой картинки
   { imageId: number },   // передаём ID картинки
@@ -112,14 +98,8 @@ export const deleteListingImage = createAsyncThunk<
   }
 );
 
-/**
- * 3) Обновление существующего изображения (PATCH /api/listings/images/{id}/)
- *
- *    Можно передать:
- *      - imageFile: File,  если нужно заменить сам файл
- *      - is_primary: boolean, если нужно пометить как главное
- *    Или передать оба одновременно.
- */
+
+//3) Обновление существующего изображения (PATCH /api/listings/images/{id}/)
 export const updateListingImage = createAsyncThunk<
   { id: number; image: string; is_primary: boolean; created_at: string },
   { id: number; imageFile?: File; is_primary?: boolean },

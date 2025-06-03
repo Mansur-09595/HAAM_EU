@@ -55,7 +55,7 @@ export default function Header() {
                     <Link href="/favorites" className={`text-lg ${pathname === "/favorites" ? "font-bold" : ""}`}>
                       Избранное
                     </Link>
-                    <Link href="/messages" className={`text-lg ${pathname === "/messages" ? "font-bold" : ""}`}>
+                    <Link href="/chat" className={`text-lg ${pathname === "/chat" ? "font-bold" : ""}`}>
                       Сообщения
                     </Link>
                     <Link href="/profile" className={`text-lg ${pathname === "/profile" ? "font-bold" : ""}`}>
@@ -112,7 +112,7 @@ export default function Header() {
               </Button>
 
               <Button asChild variant="ghost" size="icon" className="hidden md:flex">
-                <Link href="/messages">
+                <Link href="/chat">
                   <MessageSquare className="h-5 w-5" />
                   <span className="sr-only">Сообщения</span>
                 </Link>
@@ -144,7 +144,7 @@ export default function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/messages">
+                    <Link href="/chat">
                       <MessageSquare className="mr-2 h-4 w-4" />
                       Сообщения
                     </Link>

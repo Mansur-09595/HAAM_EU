@@ -128,7 +128,7 @@ export default function ProfilePage() {
                   <Link href="/favorites"><Heart className="mr-2 h-4 w-4" />Избранное</Link>
                 </Button>
                 <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link href="/messages"><MessageSquare className="mr-2 h-4 w-4" />Сообщения</Link>
+                  <Link href="/chat"><MessageSquare className="mr-2 h-4 w-4" />Сообщения</Link>
                 </Button>
                 <Button variant="ghost" className="w-full justify-start" asChild>
                   <Link href="/notifications"><Bell className="mr-2 h-4 w-4" />Уведомления</Link>

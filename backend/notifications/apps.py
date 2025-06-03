@@ -1,8 +1,10 @@
+# listings/apps.py
 from django.apps import AppConfig
+import os
 
 class NotificationsConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'notifications'
-    
-    def ready(self):
-        import notifications.signals
+    name = "notifications"
+    # не хардкодим путь, а вычисляем его по __file__
+    path = os.path.dirname(os.path.abspath(__file__))
+    verbose_name = "Notifications"
+

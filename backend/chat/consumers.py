@@ -11,7 +11,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user_id = self.scope['url_route']['kwargs']['user_id']
         self.user = self.scope['user']
         
-        if not self.user.is_authenticated:
+        if not self.user.is_authenticated or str(self.user.id) != self.user_id:
             await self.close()
             return
         

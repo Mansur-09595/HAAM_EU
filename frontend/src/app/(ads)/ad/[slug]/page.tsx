@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useParams, notFound } from 'next/navigation'
+import { useParams, notFound, useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from "@/store/store"
 import { fetchAdBySlug } from "@/store/slices/ads/adsAction"
+import { createConversation } from '@/store/slices/chat/chatActions'
 import {
   ArrowLeft, Heart, Share2, Flag, MapPin,
   Calendar, MessageSquare, Phone, Shield, Eye
@@ -21,17 +22,74 @@ import { Card, CardContent } from '@/components/ui/card'
 
 export default function ListingDetailPage() {
   const { slug } = useParams()
+  const router = useRouter()
   const dispatch = useAppDispatch()
 
-  const { selectedAd: listing, loading, error } = useAppSelector(state => state.ads)
+  // 1) Загрузка самого объявления
+  const { selectedAd: listing, loading: loadingAd, error: adError } = useAppSelector(
+    state => state.ads
+  )
+
+  // 2) Текущий залогиненный пользователь берём из auth-слайса
+  const currentUser = useAppSelector(state => state.auth.user)
+  const loadingProfile = useAppSelector(state => state.auth.loading)
 
   useEffect(() => {
-    if (slug) dispatch(fetchAdBySlug(String(slug)))
+    if (slug) {
+      dispatch(fetchAdBySlug(String(slug)))
+    }
   }, [slug, dispatch])
 
-  if (loading) return <p>Загрузка...</p>
-  if (error === "Объявление не найдено") return notFound()
-  if (!listing) return null
+  if (loadingAd || loadingProfile) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <p>Загрузка…</p>
+      </div>
+    )
+  }
+
+  if (adError === 'Объявление не найдено') {
+    return notFound()
+  }
+  if (!listing) {
+    return null
+  }
+
+  // Если профиль не загрузился (нет токена или он недействителен),
+  // показываем приглашение зайти под своим аккаунтом, чтобы начать переписку
+  if (!currentUser) {
+    return (
+      <div className="container mx-auto px-4 py-6 text-center">
+        <p>Чтобы написать владельцу, нужно войти в систему</p>
+        <Button asChild>
+          <Link href="/login">Перейти к логину</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  const handleStartChat = async () => {
+    // Не позволяйте писать самому себе
+    if (currentUser.id === listing.owner.id) {
+      return
+    }
+
+    try {
+      // Вызываем Thunk, который создаст (или вернёт) беседу
+      const conv = await dispatch(
+        createConversation({
+          participant_id: listing.owner.id,
+          listing_id: listing.id,
+        })
+      ).unwrap()
+
+      // И сразу пушим на страницу /messages/[conversationId]
+      router.push(`/chat/${conv.id}`)
+    } catch (err) {
+      console.error('Не удалось начать переписку:', err)
+      // Здесь можно показать уведомление об ошибке
+    }
+  }
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -148,7 +206,10 @@ export default function ListingDetailPage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <Button><MessageSquare className="mr-2 h-4 w-4" />Написать</Button>
+                <Button disabled={currentUser?.id === listing.owner.id} onClick={handleStartChat}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                    Написать
+                </Button>
                 <Button variant="outline"><Phone className="mr-2 h-4 w-4" />Показать телефон</Button>
               </div>
             </CardContent>

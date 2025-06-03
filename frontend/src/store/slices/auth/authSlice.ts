@@ -1,4 +1,4 @@
-import {  createSlice } from '@reduxjs/toolkit'
+import {  createSlice, PayloadAction  } from '@reduxjs/toolkit'
 import { loginUser, checkAuth, refreshToken } from './authAction' // Импортируем функции для работы с API  
 import {  Users } from '@/types/IUsers' // Импортируем тип пользователя
 
@@ -46,15 +46,20 @@ const authSlice = createSlice({
     })
 
     // checkAuth
-    builder.addCase(checkAuth.fulfilled, (state, action) => {
-      state.user = action.payload
-      state.loading = false
-    })
-    .addCase(checkAuth.pending, state => { state.loading = true; state.error = null })
-    .addCase(checkAuth.rejected, (state, action) => {
-      state.loading = false
-      state.error = action.payload ?? action.error.message ?? null ?? null
-    })
+    builder
+      .addCase(checkAuth.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(checkAuth.fulfilled, (state, action: PayloadAction<Users>) => {
+        state.loading = false
+        state.user = action.payload
+      })
+      .addCase(checkAuth.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload ?? action.error.message ?? null
+        state.user = null
+      })
 
     // refreshToken
     builder.addCase(refreshToken.fulfilled, (state, action) => {

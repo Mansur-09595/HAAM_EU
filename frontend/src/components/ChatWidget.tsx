@@ -1,7 +1,7 @@
 // src/components/ChatWidget.tsx
 
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/store';
 import {
   receiveMessage,
@@ -17,6 +17,7 @@ interface ChatWidgetProps {
 export default function ChatWidget({ userId, conversationId }: ChatWidgetProps) {
   const dispatch = useAppDispatch();
   const wsRef = useRef<WebSocket | null>(null);
+  const [inputValue, setInputValue] = useState('');
   const messagesState = useAppSelector((state) =>
     state.chat.messagesByConversation[conversationId]
   );
@@ -97,13 +98,14 @@ export default function ChatWidget({ userId, conversationId }: ChatWidgetProps) 
           type="text"
           className="flex-grow border rounded px-2 py-1"
           placeholder="Введите сообщение..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              const target = e.target as HTMLInputElement;
-              const text = target.value.trim();
+              const text = inputValue.trim();
               if (text) {
                 handleSend(text);
-                target.value = '';
+                setInputValue('');
               }
             }
           }}
@@ -111,13 +113,10 @@ export default function ChatWidget({ userId, conversationId }: ChatWidgetProps) 
         <button
           className="ml-2 bg-green-500 text-white px-4 rounded"
           onClick={() => {
-            const inp = document.querySelector(
-              'input[placeholder="Введите сообщение..."]'
-            ) as HTMLInputElement;
-            const text = inp.value.trim();
+            const text = inputValue.trim();
             if (text) {
               handleSend(text);
-              inp.value = '';
+              setInputValue('');
             }
           }}
         >

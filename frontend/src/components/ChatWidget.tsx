@@ -42,9 +42,12 @@ export default function ChatWidget({ userId, conversationId }: ChatWidgetProps) 
   useEffect(() => {
     if (!userId) return
 
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const ws = new WebSocket(`${protocol}://${window.location.host}/ws/chat/${userId}/`)
-    wsRef.current = ws
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const token = localStorage.getItem('accessToken') || ''
+    const ws = new WebSocket(
+      `${protocol}://localhost:8000/ws/chat/${userId}/?token=${token}`
+    )
+    wsRef.current = ws;
 
     ws.onopen = () => {
       console.log('WebSocket открыт')

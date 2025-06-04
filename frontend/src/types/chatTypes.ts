@@ -46,6 +46,20 @@ export interface ISendMessagePayload {
     conversation_id: number;
     content: string;
 }
+
+// ответ от POST /conversations/{id}/send_message/
+export interface ISendMessageResponse {
+  id: number;
+  conversation_id: number;
+  sender: {
+    id: number;
+    username: string;
+    avatar?: string;
+  };
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
   
   // Состояние одного разговора в Redux: 
   // здесь будем хранить историю сообщений, статус загрузки и ошибку

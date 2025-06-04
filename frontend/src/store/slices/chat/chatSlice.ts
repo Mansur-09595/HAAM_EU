@@ -51,7 +51,7 @@ const chatSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: builder => {
-    // ─── fetchConversations ─────────────────────────────────────────────────
+    // ─── fetchConversations ───────────────────────────────────────────────────
     builder
       .addCase(fetchConversations.pending, state => {
         state.conversations.loading = true
@@ -66,76 +66,70 @@ const chatSlice = createSlice({
         state.conversations.error = action.payload ?? action.error.message ?? null
       })
 
-    // ─── createConversation ─────────────────────────────────────────────────
-    builder
-      .addCase(createConversation.pending, state => {
-        state.createConversation.loading = true
-        state.createConversation.error = null
-      })
-      .addCase(createConversation.fulfilled, (state, action: PayloadAction<IConversation>) => {
-        state.createConversation.loading = false
-        // Если беседы ещё нет в списке, добавим
-        const conv = action.payload
-        const exists = state.conversations.items.find(c => c.id === conv.id)
-        if (!exists) {
-          state.conversations.items.unshift(conv)
-        }
-      })
-      .addCase(createConversation.rejected, (state, action) => {
-        state.createConversation.loading = false
-        state.createConversation.error = action.payload ?? action.error.message ?? null
-      })
-
-    // ─── fetchMessages ────────────────────────────────────────────────────────
-    builder
-      .addCase(fetchMessages.pending, (state, action) => {
-        const convId = action.meta.arg
-        state.messagesByConversation[convId] = {
-          messages: [],
-          loading: true,
-          error: null,
-        }
-      })
-      .addCase(fetchMessages.fulfilled, (state, action) => {
-        const convId = action.meta.arg
-        state.messagesByConversation[convId] = {
-          messages: action.payload,
-          loading: false,
-          error: null,
-        }
-      })
-      .addCase(fetchMessages.rejected, (state, action) => {
-        const convId = action.meta.arg
-        state.messagesByConversation[convId] = {
-          messages: [],
-          loading: false,
-          error: action.payload ?? action.error.message ?? null,
-        }
-      })
-
-    // ─── sendMessage ─────────────────────────────────────────────────────────
-    builder
-      .addCase(sendMessage.pending, state => {
-        state.sendMessage.loading = true
-        state.sendMessage.error = null
-      })
-      .addCase(sendMessage.fulfilled, (state, action) => {
-        state.sendMessage.loading = false
-        const msg = action.payload
-        const convId = msg.conversation_id
-        if (!state.messagesByConversation[convId]) {
-          state.messagesByConversation[convId] = {
-            messages: [],
-            loading: false,
-            error: null,
+      // ─── fetchMessages ─────────────────────────────────────────────────────────
+      builder
+        .addCase(fetchMessages.pending, (state, action) => {
+          const convId = action.meta.arg
+          if (!state.messagesByConversation[convId]) {
+            state.messagesByConversation[convId] = { messages: [], loading: false, error: null }
           }
+          state.messagesByConversation[convId].loading = true
+          state.messagesByConversation[convId].error = null
+        })
+        .addCase(fetchMessages.fulfilled, (state, action) => {
+          const convId = action.meta.arg
+          state.messagesByConversation[convId].loading = false
+          state.messagesByConversation[convId].messages = action.payload
+        })
+        .addCase(fetchMessages.rejected, (state, action) => {
+          const convId = action.meta.arg
+          state.messagesByConversation[convId].loading = false
+          state.messagesByConversation[convId].error = action.payload ?? action.error.message ?? null
         }
-        state.messagesByConversation[convId].messages.push(msg)
-      })
-      .addCase(sendMessage.rejected, (state, action) => {
-        state.sendMessage.loading = false
-        state.sendMessage.error = action.payload ?? action.error.message ?? null
-      })
+      )
+
+      // ─── sendMessage ───────────────────────────────────────────────────────────
+      builder
+        .addCase(sendMessage.pending, (state, action) => {
+          const convId = action.meta.arg.conversation_id
+          if (!state.messagesByConversation[convId]) {
+            state.messagesByConversation[convId] = { messages: [], loading: false, error: null }
+          }
+          state.messagesByConversation[convId].loading = true
+          state.messagesByConversation[convId].error = null
+        })
+        .addCase(sendMessage.fulfilled, (state, action) => {
+          const convId = action.meta.arg.conversation_id
+          state.messagesByConversation[convId].loading = false
+          // Добавляем только что отправленное сообщение в конец массива
+          state.messagesByConversation[convId].messages.push(action.payload)
+        })
+        .addCase(sendMessage.rejected, (state, action) => {
+          const convId = action.meta.arg.conversation_id
+          state.messagesByConversation[convId].loading = false
+          state.messagesByConversation[convId].error = action.payload ?? action.error.message ?? null
+        }
+      )
+
+      // ─── createConversation ────────────────────────────────────────────────────
+      builder
+        .addCase(createConversation.pending, state => {
+          state.conversations.loading = true
+          state.conversations.error = null
+        })
+        .addCase(createConversation.fulfilled, (state, action: PayloadAction<IConversation>) => {
+          state.conversations.loading = false
+          // Добавляем новую беседу, если её не было
+          const exists = state.conversations.items.some(c => c.id === action.payload.id)
+          if (!exists) {
+            state.conversations.items.unshift(action.payload)
+          }
+        })
+        .addCase(createConversation.rejected, (state, action) => {
+          state.conversations.loading = false
+          state.conversations.error = action.payload ?? action.error.message ?? null
+        }
+      )
   },
 })
 

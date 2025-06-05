@@ -122,7 +122,7 @@ export default function ProfilePage() {
                   <Link href="/profile"><User className="mr-2 h-4 w-4" />Мой профиль</Link>
                 </Button>
                 <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link href="/listings/my"><Package className="mr-2 h-4 w-4" />Мои объявления</Link>
+                  <Link href="/my-ads"><Package className="mr-2 h-4 w-4" />Мои объявления</Link>
                 </Button>
                 <Button variant="ghost" className="w-full justify-start" asChild>
                   <Link href="/favorites"><Heart className="mr-2 h-4 w-4" />Избранное</Link>

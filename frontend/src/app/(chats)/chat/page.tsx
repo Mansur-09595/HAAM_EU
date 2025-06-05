@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/store/store'
 import {
   fetchConversations,
   fetchMessages,
+  sendMessage,
 } from '@/store/slices/chat/chatActions'
 import { IMessage, IConversation } from '@/types/chatTypes'
 import { Input } from '@/components/ui/input'
@@ -14,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Send } from 'lucide-react'
-import { useChatWebSocket } from '@/hooks/useChatWebSocket'
+// import { useChatWebSocket } from '@/hooks/useChatWebSocket'
 
 
 export default function MessagesPage() {
@@ -33,7 +34,7 @@ export default function MessagesPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [newMessage, setNewMessage] = useState('')
 
-  const wsRef = useChatWebSocket(currentUserId, activeConversationId)
+  // const wsRef = useChatWebSocket(currentUserId, activeConversationId)
 
   useEffect(() => {
     dispatch(fetchConversations()).unwrap().catch(err => {
@@ -79,7 +80,7 @@ export default function MessagesPage() {
               </div>
             </div>
 
-            <Tabs defaultValue={activeConversationId?.toString() || 'all'}>
+            <Tabs value={activeConversationId ? undefined : 'all'} defaultValue="all">
               <TabsList className="w-full px-3 pt-3">
                 <TabsTrigger value="all" className="flex-1">Все</TabsTrigger>
                 <TabsTrigger value="unread" className="flex-1">Непрочитанные</TabsTrigger>
@@ -280,18 +281,17 @@ export default function MessagesPage() {
 
             {/* Форма отправки */}
             <div className="p-3 border-t">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  if (!newMessage.trim() || activeConversationId === null) return
-                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-                    wsRef.current.send(JSON.stringify({
-                      type: 'chat_message',
-                      conversation_id: activeConversationId,
-                      content: newMessage.trim(),
-                    }))
-                  }
-                  setNewMessage('')
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!newMessage.trim() || activeConversationId === null) return
+
+                dispatch(sendMessage({
+                  conversation_id: activeConversationId,
+                  content: newMessage.trim(),
+                }))
+
+                setNewMessage('')
                 }}
                 className="flex gap-2"
               >

@@ -33,8 +33,13 @@ export function useChatWebSocket(userId: number | null, activeConversationId: nu
     ws.onopen = () => {
         console.log('WebSocket открыт')
       }
+  
       ws.onerror = (err) => {
         console.error('WebSocket ошибка', err)
+      }
+  
+      ws.onclose = (event) => {
+        console.log('WebSocket закрыт', event.code, event.reason)
       }
 
     return () => {

@@ -1,31 +1,44 @@
 from urllib.parse import parse_qs
-
-from channels.db import database_sync_to_async
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
+from channels.db import database_sync_to_async
 
+@database_sync_to_async
+def get_user(validated_token):
+    try:
+        user_id = validated_token[JWTAuthentication.user_id_claim]
+        User = get_user_model()
+        return User.objects.get(id=user_id)
+    except Exception as e:
+        print(f"[get_user] Ошибка: {e}")
+        return AnonymousUser()
 
 class JWTAuthMiddleware:
-    """Middleware for Channels that authenticates WebSocket connections using a
-    JWT token passed as a ``token`` query parameter."""
-
     def __init__(self, inner):
         self.inner = inner
-        self.auth = JWTAuthentication()
 
-    async def __call__(self, scope, receive, send):
-        query_string = scope.get("query_string", b"").decode()
-        params = parse_qs(query_string)
-        token = params.get("token", [None])[0]
-        scope["user"] = await self._get_user(token)
-        return await self.inner(scope, receive, send)
+    def __call__(self, scope):
+        return JWTAuthMiddlewareInstance(scope, self.inner)
 
-    @database_sync_to_async
-    def _get_user(self, token):
-        if not token:
-            return AnonymousUser()
-        try:
-            validated = self.auth.get_validated_token(token)
-            return self.auth.get_user(validated)
-        except Exception:
-            return AnonymousUser()
+class JWTAuthMiddlewareInstance:
+    def __init__(self, scope, inner):
+        self.scope = dict(scope)
+        self.inner = inner
+
+    async def __call__(self, receive, send):
+        query = parse_qs(self.scope.get("query_string", b"").decode())
+        token = query.get("token", [None])[0]
+
+        if token:
+            try:
+                validated = JWTAuthentication().get_validated_token(token)
+                self.scope["user"] = await get_user(validated)
+            except InvalidToken as e:
+                print(f"[JWTAuthMiddleware] Недействительный токен: {e}")
+                self.scope["user"] = AnonymousUser()
+        else:
+            self.scope["user"] = AnonymousUser()
+
+        return await self.inner(self.scope, receive, send)

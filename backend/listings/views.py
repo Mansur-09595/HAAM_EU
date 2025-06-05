@@ -204,4 +204,4 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
         if listing.owner != self.request.user:
             raise permissions.PermissionDenied("Можно добавлять видео только к своим объявлениям")
 
-        serializer.save()
+        serializer.save(listing=listing)

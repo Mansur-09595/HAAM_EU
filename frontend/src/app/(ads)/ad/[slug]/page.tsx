@@ -84,7 +84,7 @@ export default function ListingDetailPage() {
       ).unwrap()
 
       // И сразу пушим на страницу /messages/[conversationId]
-      router.push(`/chat/${conv.id}`)
+      router.push(`/chat?conv=${conv.id}`)
     } catch (err) {
       console.error('Не удалось начать переписку:', err)
       // Здесь можно показать уведомление об ошибке

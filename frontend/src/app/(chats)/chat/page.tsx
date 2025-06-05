@@ -1,13 +1,11 @@
-// src/app/chat/page.tsx  (или где у вас MessagesPage)
 'use client'
 
-import React, { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import {
   fetchConversations,
   fetchMessages,
-  sendMessage,
 } from '@/store/slices/chat/chatActions'
 import { IMessage, IConversation } from '@/types/chatTypes'
 import { Input } from '@/components/ui/input'
@@ -16,51 +14,51 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Send } from 'lucide-react'
+import { useChatWebSocket } from '@/hooks/useChatWebSocket'
+
 
 export default function MessagesPage() {
   const dispatch = useAppDispatch()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const currentUser = useAppSelector(state => state.auth.user)
   const currentUserId = currentUser?.id ?? null
 
-  // --- стейты бесед ---
   const { items: conversations, loading: convLoading, error: convError } = useAppSelector(
     state => state.chat.conversations
   )
-  // --- стейты сообщений по IDs ---
   const messagesByConversation = useAppSelector(state => state.chat.messagesByConversation)
 
-  // локальный стейт: какая беседа сейчас открыта
-  const [activeConversationId, setActiveConversationId] = React.useState<number | null>(null)
-  const [newMessage, setNewMessage] = React.useState('')
+  const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
+  const [newMessage, setNewMessage] = useState('')
 
-  // 1) При монтировании — грузим беседы
+  const wsRef = useChatWebSocket(currentUserId, activeConversationId)
+
   useEffect(() => {
     dispatch(fetchConversations()).unwrap().catch(err => {
-      if (err === 'logout') {
-        router.push('/login')
-      }
+      if (err === 'logout') router.push('/login')
     })
   }, [dispatch, router])
 
-  // 2) Когда сменился activeConversationId — грузим её историю
+  useEffect(() => {
+    const convFromQuery = searchParams.get('conv')
+    const convId = Number(convFromQuery)
+    if (convId && !activeConversationId) {
+      setActiveConversationId(convId)
+    }
+  }, [searchParams, activeConversationId])
+
   useEffect(() => {
     if (activeConversationId !== null) {
       dispatch(fetchMessages(activeConversationId)).unwrap().catch(err => {
-        if (err === 'logout') {
-          router.push('/login')
-        }
+        if (err === 'logout') router.push('/login')
       })
     }
   }, [dispatch, activeConversationId, router])
 
-  // 3) Рендер
-  if (convLoading) {
-    return <p>Загрузка бесед…</p>
-  }
+  if (convLoading) return <p>Загрузка бесед…</p>
   if (convError) {
-    // если ошибка token_not_valid → редирект
     if (convError.includes('token_not_valid') || convError === 'logout') {
       router.push('/login')
       return null
@@ -73,7 +71,6 @@ export default function MessagesPage() {
       <h1 className="text-2xl font-bold mb-6">Сообщения</h1>
       <div className="bg-card border rounded-lg overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-[350px_1fr]">
-          {/* ─── Список бесед справа ─────────────────────────────────────── */}
           <div className="border-r">
             <div className="p-3 border-b">
               <div className="relative">
@@ -87,14 +84,11 @@ export default function MessagesPage() {
                 <TabsTrigger value="all" className="flex-1">Все</TabsTrigger>
                 <TabsTrigger value="unread" className="flex-1">Непрочитанные</TabsTrigger>
               </TabsList>
-
-              {/* ─── Все беседы ─────────────────────────────────────────── */}
               <TabsContent value="all" className="m-0">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   {conversations.map(conv => {
                     const lastMsg = conv.last_message
                     const isOwn = lastMsg?.sender.id === currentUserId
-
                     return (
                       <div
                         key={conv.id}
@@ -104,19 +98,17 @@ export default function MessagesPage() {
                         onClick={() => setActiveConversationId(conv.id)}
                       >
                         <div className="flex gap-3">
-                          <div className="relative">
-                            <Avatar>
-                              {conv.participants
-                                .filter(u => u.id !== currentUserId)
-                                .map(u => (
-                                  <AvatarImage key={u.id} src={u.avatar || ''} alt={u.username} />
-                                ))[0] || (
-                                <AvatarFallback>
-                                  {conv.participants[0]?.username.charAt(0)}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                          </div>
+                          <Avatar>
+                            {conv.participants
+                              .filter(u => u.id !== currentUserId)
+                              .map(u => (
+                                <AvatarImage key={u.id} src={u.avatar || ''} alt={u.username} />
+                              ))[0] || (
+                              <AvatarFallback>
+                                {conv.participants[0]?.username.charAt(0)}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
                               <div className="font-medium truncate">
@@ -132,7 +124,7 @@ export default function MessagesPage() {
                               </div>
                             </div>
                             <div className={`text-sm truncate ${
-                              lastMsg && lastMsg.is_read ? 'text-muted-foreground' : 'font-medium'
+                              lastMsg?.is_read ? 'text-muted-foreground' : 'font-medium'
                             }`}>
                               {lastMsg
                                 ? (isOwn ? `Вы: ${lastMsg.content}` : lastMsg.content)
@@ -150,8 +142,6 @@ export default function MessagesPage() {
                   })}
                 </ScrollArea>
               </TabsContent>
-
-              {/* ─── Только непрочитанные ──────────────────────────────────── */}
               <TabsContent value="unread" className="m-0">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   {conversations
@@ -211,9 +201,9 @@ export default function MessagesPage() {
             </Tabs>
           </div>
 
-          {/* ─── Область чата ──────────────────────────────────────────────── */}
+          {/* Чат + отправка */}
           <div className="flex flex-col h-[calc(100vh-150px)]">
-            {/* Заголовок выбранной беседы */}
+            {/* Заголовок */}
             <div className="p-3 border-b flex items-center justify-between">
               {activeConversationId !== null ? (
                 (() => {
@@ -248,56 +238,38 @@ export default function MessagesPage() {
               )}
             </div>
 
-            {/* Список сообщений */}
+            {/* Сообщения */}
             <ScrollArea className="flex-1 p-4 overflow-y-auto">
               {activeConversationId !== null ? (
                 (() => {
                   const msgsState = messagesByConversation[activeConversationId]
                   const msgs: IMessage[] = msgsState?.messages || []
-
                   return (
                     <div className="space-y-4">
                       {msgs.map(message => {
                         const isOwnMsg = message.sender.id === currentUserId
                         return (
-                          <div
-                            key={message.id}
-                            className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'}`}
-                          >
+                          <div key={message.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'}`}>
                             <div className="flex gap-2 max-w-[80%]">
                               {!isOwnMsg && (
                                 <Avatar className="h-8 w-8">
-                                  <AvatarImage
-                                    src={message.sender.avatar || ''}
-                                    alt={message.sender.username}
-                                  />
-                                  <AvatarFallback>
-                                    {message.sender.username.charAt(0)}
-                                  </AvatarFallback>
+                                  <AvatarImage src={message.sender.avatar || ''} alt={message.sender.username} />
+                                  <AvatarFallback>{message.sender.username.charAt(0)}</AvatarFallback>
                                 </Avatar>
                               )}
                               <div>
-                                <div
-                                  className={`rounded-lg px-4 py-2 ${
-                                    isOwnMsg
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'bg-muted'
-                                  }`}
-                                >
+                                <div className={`rounded-lg px-4 py-2 ${isOwnMsg ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                   {message.content}
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-1">
-                                  {new Date(message.created_at).toLocaleTimeString('ru-RU', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
+                                  {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                               </div>
                             </div>
                           </div>
                         )
                       })}
-                      <div /> {/* пустой элемент для автоскролла вниз */}
+                      <div />
                     </div>
                   )
                 })()
@@ -308,20 +280,25 @@ export default function MessagesPage() {
 
             {/* Форма отправки */}
             <div className="p-3 border-t">
-              <form onSubmit={async e => {
-                e.preventDefault()
-                if (!newMessage.trim() || activeConversationId === null) return
-                dispatch(sendMessage({ conversation_id: activeConversationId, content: newMessage.trim() }))
-                  .unwrap()
-                  .catch(err => {
-                    if (err === 'logout') router.push('/login')
-                  })
-                setNewMessage('')
-              }} className="flex gap-2">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!newMessage.trim() || activeConversationId === null) return
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({
+                      type: 'chat_message',
+                      conversation_id: activeConversationId,
+                      content: newMessage.trim(),
+                    }))
+                  }
+                  setNewMessage('')
+                }}
+                className="flex gap-2"
+              >
                 <Input
                   placeholder="Введите сообщение…"
                   value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
+                  onChange={(e) => setNewMessage(e.target.value)}
                   className="flex-1"
                   disabled={activeConversationId === null}
                 />

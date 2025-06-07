@@ -1,5 +1,3 @@
-# chat/consumers.py
-
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
@@ -16,6 +14,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         self.group_name = f"chat_{self.user.id}"
 
+        print(f"[DEBUG] WebSocket CONNECT: user={self.user} scope={self.scope}")
+        print(f"[DEBUG] Adding to group: {self.group_name}")
+
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         print(f"WebSocket подключён: пользователь {self.user.username} (ID {self.user.id})")
@@ -30,33 +31,40 @@ class ChatConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
             msg_type = data.get("type")
 
+            # PING/PONG обработка
+            if msg_type == "ping":
+                await self.send(text_data=json.dumps({"type": "pong"}))
+                return
+
             if msg_type != "chat_message":
-                await self.send_json({"type": "error", "message": "Неподдерживаемый тип сообщения"})
+                await self.send(text_data=json.dumps({"type": "error", "message": "Неподдерживаемый тип сообщения"}))
                 return
 
             conversation_id = data.get("conversation_id")
             content = data.get("content", "").strip()
 
             if not conversation_id or not content:
-                await self.send_json({"type": "error", "message": "Необходимо указать conversation_id и content"})
+                await self.send(text_data=json.dumps({"type": "error", "message": "Необходимо указать conversation_id и content"}))
                 return
 
             # Проверка участия в беседе
-            if not await self.is_participant(conversation_id):
-                await self.send_json({"type": "error", "message": "Вы не участник этой беседы"})
+            if not await self.check_conversation_participant(conversation_id):
+                await self.send(text_data=json.dumps({"type": "error", "message": "Вы не участник этой беседы"}))
                 return
 
-            message = await self.create_message(conversation_id, content)
+            message = await self.save_message(conversation_id, content)
             if not message:
-                await self.send_json({"type": "error", "message": "Не удалось сохранить сообщение"})
+                await self.send(text_data=json.dumps({"type": "error", "message": "Не удалось сохранить сообщение"}))
                 return
 
             serialized = await self.serialize_message(message)
             recipients = await self.get_participants(conversation_id)
 
             for participant in recipients:
+                group_name = f"chat_{participant.id}"
+                print(f"[DEBUG] Sending to group: {group_name} — data: {serialized}")
                 await self.channel_layer.group_send(
-                    f"chat_{participant.id}",
+                    group_name,
                     {
                         "type": "chat_message",
                         "message": serialized
@@ -64,23 +72,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 )
 
         except json.JSONDecodeError:
-            await self.send_json({"type": "error", "message": "Неверный формат JSON"})
+            await self.send(text_data=json.dumps({"type": "error", "message": "Неверный формат JSON"}))
         except Exception as e:
             print(f"Ошибка в receive: {e}")
-            await self.send_json({"type": "error", "message": "Внутренняя ошибка сервера"})
+            await self.send(text_data=json.dumps({"type": "error", "message": "Внутренняя ошибка сервера"}))
 
     async def chat_message(self, event):
         try:
-            await self.send_json({
+            await self.send(text_data=json.dumps({
                 "type": "chat_message",
                 "message": event["message"]
-            })
+            }))
         except Exception as e:
             print(f"Ошибка при отправке сообщения клиенту: {e}")
 
     @database_sync_to_async
     def check_conversation_participant(self, conversation_id):
-        """Проверяет, является ли пользователь участником беседы"""
         try:
             from .models import Conversation
             conversation = Conversation.objects.get(id=conversation_id)
@@ -90,16 +97,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def save_message(self, conversation_id, content):
-        """Сохраняет сообщение в базу данных"""
         try:
             from .models import Conversation, Message
             conv = Conversation.objects.get(id=conversation_id)
             msg = Message.objects.create(
-                conversation=conv, 
-                sender=self.user, 
+                conversation=conv,
+                sender=self.user,
                 content=content
             )
-            # Обновляем время последнего обновления беседы
             conv.save()
             return msg
         except Exception as e:
@@ -107,25 +112,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return None
 
     @database_sync_to_async
-    def get_conversation(self, conversation_id):
-        """Получает объект беседы"""
+    def get_participants(self, conversation_id):
         try:
             from .models import Conversation
-            return Conversation.objects.get(id=conversation_id)
-        except:
-            return None
-
-    @database_sync_to_async
-    def get_participants(self, conversation):
-        """Получает участников беседы"""
-        try:
+            conversation = Conversation.objects.get(id=conversation_id)
             return list(conversation.participants.all())
         except:
             return []
 
     @database_sync_to_async
     def serialize_message(self, message):
-        """Сериализует сообщение для отправки"""
         try:
             return MessageSerializer(message).data
         except Exception as e:

@@ -160,7 +160,7 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
 
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 
     "TOKEN_OBTAIN_SERIALIZER": "users.token.CustomTokenObtainPairSerializer",
@@ -197,10 +197,11 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(os.getenv('REDIS_HOST', 'localhost'), int(os.getenv('REDIS_PORT', 6379)))],
+            'hosts': [(os.getenv('REDIS_HOST', 'redis'), int(os.getenv('REDIS_PORT', 6379)))],
         },
     },
 }
+
 
 # Настройки для логирования WebSocket соединений
 LOGGING = {
@@ -212,12 +213,17 @@ LOGGING = {
         },
     },
     'loggers': {
-        'chat': {
+        'channels': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'channels_redis': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
     },
 }
+
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

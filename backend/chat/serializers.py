@@ -5,10 +5,11 @@ from listings.serializers import ListingSerializer
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
+    conversation_id = serializers.IntegerField(source='conversation.id', read_only=True)
     
     class Meta:
         model = Message
-        fields = ('id', 'sender', 'content', 'is_read', 'created_at')
+        fields = ('id', 'conversation_id', 'sender', 'content', 'is_read', 'created_at')
         read_only_fields = ('id', 'sender', 'created_at')
 
 class ConversationSerializer(serializers.ModelSerializer):

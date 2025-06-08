@@ -1,47 +1,51 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/store/store'
-import {
-  fetchConversations,
-  fetchMessages,
-  sendMessage,
-} from '@/store/slices/chat/chatActions'
-import { IMessage, IConversation } from '@/types/chatTypes'
+import { fetchConversations, fetchMessages } from '@/store/slices/chat/chatActions'
+import { IConversation } from '@/types/chatTypes'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Send } from 'lucide-react'
-// import { useChatWebSocket } from '@/hooks/useChatWebSocket'
-
+import { useChatWebSocket } from '@/hooks/useChatWebSocket'
 
 export default function MessagesPage() {
+  console.log('[MessagesPage] Рендер компонента MessagesPage')
+
   const dispatch = useAppDispatch()
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const currentUser = useAppSelector(state => state.auth.user)
   const currentUserId = currentUser?.id ?? null
+  console.log('[MessagesPage] currentUserId:', currentUserId)
 
   const { items: conversations, loading: convLoading, error: convError } = useAppSelector(
     state => state.chat.conversations
   )
   const messagesByConversation = useAppSelector(state => state.chat.messagesByConversation)
 
+  console.log('[MessagesPage] messagesByConversation:', messagesByConversation)
+
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [newMessage, setNewMessage] = useState('')
 
-  // const wsRef = useChatWebSocket(currentUserId, activeConversationId)
+  const wsRef = useChatWebSocket(currentUserId, activeConversationId)
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Получаем беседы при монтировании
   useEffect(() => {
     dispatch(fetchConversations()).unwrap().catch(err => {
       if (err === 'logout') router.push('/login')
     })
   }, [dispatch, router])
 
+  // Установка activeConversationId из query ?conv=
   useEffect(() => {
     const convFromQuery = searchParams.get('conv')
     const convId = Number(convFromQuery)
@@ -50,20 +54,39 @@ export default function MessagesPage() {
     }
   }, [searchParams, activeConversationId])
 
+  // Загружаем сообщения при смене activeConversationId
   useEffect(() => {
+    console.log('[MessagesPage] useEffect → activeConversationId изменилась:', activeConversationId)
     if (activeConversationId !== null) {
       dispatch(fetchMessages(activeConversationId)).unwrap().catch(err => {
         if (err === 'logout') router.push('/login')
       })
     }
-  }, [dispatch, activeConversationId, router])
+  }, [activeConversationId, dispatch, router])
 
-  if (convLoading) return <p>Загрузка бесед…</p>
-  if (convError) {
-    if (convError.includes('token_not_valid') || convError === 'logout') {
-      router.push('/login')
-      return null
+  // Для auto-scroll — отслеживаем сообщения текущей беседы
+  const messagesForCurrentConv = activeConversationId !== null
+  ? (messagesByConversation[activeConversationId]?.messages || [])
+  : []
+
+  console.log('[MessagesPage] messagesForCurrentConv:', messagesForCurrentConv)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' })
     }
+  }, [messagesForCurrentConv.length])
+
+  useEffect(() => {
+    if (convError && (convError.includes('token_not_valid') || convError === 'logout')) {
+      console.log('[MessagesPage] convError → редирект на /login')
+      router.push('/login')
+    }
+  }, [convError, router])
+  
+  if (convLoading) return <p>Загрузка бесед…</p>
+  
+  if (convError && !(convError.includes('token_not_valid') || convError === 'logout')) {
     return <p className="text-red-500">Ошибка загрузки бесед: {convError}</p>
   }
 
@@ -72,6 +95,8 @@ export default function MessagesPage() {
       <h1 className="text-2xl font-bold mb-6">Сообщения</h1>
       <div className="bg-card border rounded-lg overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-[350px_1fr]">
+
+          {/* Левая колонка: список бесед */}
           <div className="border-r">
             <div className="p-3 border-b">
               <div className="relative">
@@ -85,6 +110,8 @@ export default function MessagesPage() {
                 <TabsTrigger value="all" className="flex-1">Все</TabsTrigger>
                 <TabsTrigger value="unread" className="flex-1">Непрочитанные</TabsTrigger>
               </TabsList>
+
+              {/* Все беседы */}
               <TabsContent value="all" className="m-0">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   {conversations.map(conv => {
@@ -105,9 +132,7 @@ export default function MessagesPage() {
                               .map(u => (
                                 <AvatarImage key={u.id} src={u.avatar || ''} alt={u.username} />
                               ))[0] || (
-                              <AvatarFallback>
-                                {conv.participants[0]?.username.charAt(0)}
-                              </AvatarFallback>
+                              <AvatarFallback>{conv.participants[0]?.username.charAt(0)}</AvatarFallback>
                             )}
                           </Avatar>
                           <div className="flex-1 min-w-0">
@@ -143,6 +168,8 @@ export default function MessagesPage() {
                   })}
                 </ScrollArea>
               </TabsContent>
+
+              {/* Непрочитанные */}
               <TabsContent value="unread" className="m-0">
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   {conversations
@@ -202,7 +229,7 @@ export default function MessagesPage() {
             </Tabs>
           </div>
 
-          {/* Чат + отправка */}
+          {/* Правая колонка: чат */}
           <div className="flex flex-col h-[calc(100vh-150px)]">
             {/* Заголовок */}
             <div className="p-3 border-b flex items-center justify-between">
@@ -242,38 +269,32 @@ export default function MessagesPage() {
             {/* Сообщения */}
             <ScrollArea className="flex-1 p-4 overflow-y-auto">
               {activeConversationId !== null ? (
-                (() => {
-                  const msgsState = messagesByConversation[activeConversationId]
-                  const msgs: IMessage[] = msgsState?.messages || []
-                  return (
-                    <div className="space-y-4">
-                      {msgs.map(message => {
-                        const isOwnMsg = message.sender.id === currentUserId
-                        return (
-                          <div key={message.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'}`}>
-                            <div className="flex gap-2 max-w-[80%]">
-                              {!isOwnMsg && (
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={message.sender.avatar || ''} alt={message.sender.username} />
-                                  <AvatarFallback>{message.sender.username.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                              )}
-                              <div>
-                                <div className={`rounded-lg px-4 py-2 ${isOwnMsg ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                  {message.content}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              </div>
+                <div className="space-y-4">
+                  {messagesForCurrentConv.map(message => {
+                    const isOwnMsg = message.sender.id === currentUserId
+                    return (
+                      <div key={message.id} className={`flex ${isOwnMsg ? 'justify-end' : 'justify-start'}`}>
+                        <div className="flex gap-2 max-w-[80%]">
+                          {!isOwnMsg && (
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={message.sender.avatar || ''} alt={message.sender.username} />
+                              <AvatarFallback>{message.sender.username.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div>
+                            <div className={`rounded-lg px-4 py-2 ${isOwnMsg ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                              {message.content}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
-                        )
-                      })}
-                      <div />
-                    </div>
-                  )
-                })()
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div ref={scrollRef} />
+                </div>
               ) : (
                 <div className="text-center text-gray-500 mt-10">Нет выбранной беседы</div>
               )}
@@ -281,19 +302,22 @@ export default function MessagesPage() {
 
             {/* Форма отправки */}
             <div className="p-3 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                if (!newMessage.trim() || activeConversationId === null) return
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  if (!newMessage.trim() || activeConversationId === null) return
 
-                dispatch(sendMessage({
-                  conversation_id: activeConversationId,
-                  content: newMessage.trim(),
-                }))
+                  // отправляем по WebSocket
+                  if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                    wsRef.current.send(JSON.stringify({
+                      type: 'chat_message',
+                      conversation_id: activeConversationId,
+                      content: newMessage.trim(),
+                    }))
+                  }
 
-                setNewMessage('')
+                  setNewMessage('')
                 }}
-                className="flex gap-2"
               >
                 <Input
                   placeholder="Введите сообщение…"
@@ -312,6 +336,7 @@ export default function MessagesPage() {
               </form>
             </div>
           </div>
+
         </div>
       </div>
     </div>

@@ -8,7 +8,18 @@ export function useChatWebSocket(userId: number | null, activeConversationId: nu
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    if (!userId) return
+    // Защита — если нет userId или activeConversationId → не подключаем
+    console.log('[HOOK] useChatWebSocket → Монтирую или меняю userId/activeConversationId', { userId, activeConversationId })
+
+    if (!userId || !activeConversationId) {
+      if (wsRef.current) {
+        console.log('[HOOK] useChatWebSocket → Закрываем соединение из-за отсутсвия userId/activeConversationId')
+
+        wsRef.current.close()
+        wsRef.current = null
+      }
+      return
+    }
 
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const token = localStorage.getItem('accessToken') || ''
@@ -16,34 +27,45 @@ export function useChatWebSocket(userId: number | null, activeConversationId: nu
 
     wsRef.current = ws
 
+    ws.onopen = () => {
+      console.log('[WebSocket] Открыто соединение для conversationId=', activeConversationId)
+    }
+
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data)
+        console.log('[WebSocket] RAW:', data)
+
         if (data.type === 'chat_message') {
           const message: IMessage = data.message
-          if (message.conversation_id === activeConversationId) {
-            dispatch(receiveMessage({ conversationId: message.conversation_id, message }))
-          }
+          console.log('[WebSocket] Получено сообщение:', message)
+
+          dispatch(receiveMessage({ conversationId: message.conversation_id, message }))
+          console.log('[HOOK] → Вызван dispatch(receiveMessage)')
+        } else if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }))
+          console.log('[WebSocket] → pong')
         }
       } catch (err) {
-        console.error('WebSocket error', err)
+        console.error('[WebSocket] Ошибка обработки сообщения', err)
       }
     }
 
-    ws.onopen = () => {
-        console.log('WebSocket открыт')
-      }
-  
-      ws.onerror = (err) => {
-        console.error('WebSocket ошибка', err)
-      }
-  
-      ws.onclose = (event) => {
-        console.log('WebSocket закрыт', event.code, event.reason)
-      }
+    ws.onerror = (err) => {
+      console.error('[WebSocket] Ошибка', err)
+    }
 
+    ws.onclose = (event) => {
+      console.log('[WebSocket] Соединение закрыто', event.code, event.reason)
+    }
+
+    // Очистка при размонтировании или при смене userId / activeConversationId
     return () => {
-      ws.close()
+      if (wsRef.current) {
+        console.log('[HOOK] useChatWebSocket → Очистка: закрываем WebSocket')
+        wsRef.current.close()
+        wsRef.current = null
+      }
     }
   }, [userId, activeConversationId, dispatch])
 

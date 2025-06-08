@@ -1,6 +1,7 @@
 // src/store/slices/chat/chatActions.ts
 
 import { createAsyncThunk } from '@reduxjs/toolkit'
+import { createAction } from '@reduxjs/toolkit'
 import { RootState } from '@/store/store'
 import {  refreshToken } from '@/store/slices/auth/authAction'
 import { logout } from '@/store/slices/auth/authSlice'
@@ -289,13 +290,4 @@ export const sendMessage = createAsyncThunk<
 )
 
 // 5) Обработка входящего WebSocket-сообщения
-export const receiveMessage = createAsyncThunk<
-  { conversationId: number; message: IMessage },
-  { conversationId: number; message: IMessage }
->(
-  'chat/receiveMessage',
-  async ({ conversationId, message }) => {
-    // просто передаём дальше, без сетевого запроса
-    return { conversationId, message }
-  }
-)
+export const receiveMessage = createAction<{ conversationId: number; message: IMessage }>('chat/receiveMessage')

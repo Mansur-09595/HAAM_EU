@@ -3,8 +3,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { createAction } from '@reduxjs/toolkit'
 import { RootState } from '@/store/store'
-import {  refreshToken } from '@/store/slices/auth/authAction'
+import { refreshToken } from '@/store/slices/auth/authAction'
 import { logout } from '@/store/slices/auth/authSlice'
+import { TokenManager } from '@/utils/tokenUtils'
 import { IConversation, IMessage, ICreateConversationPayload, ISendMessagePayload, ISendMessageResponse, IPaginatedConversations } from '@/types/chatTypes'
 
 const API_BASE = 'http://localhost:8000/api/chat'
@@ -12,7 +13,7 @@ const API_BASE = 'http://localhost:8000/api/chat'
 
 // Вспомогательная функция: берёт актуальный accessToken из стейта
 function getBearerToken(getState: () => RootState): string | null {
-  const token = getState().auth.accessToken
+  const token = getState().auth.accessToken || TokenManager.getAccessToken()
   return token ? `Bearer ${token}` : null
 }
 

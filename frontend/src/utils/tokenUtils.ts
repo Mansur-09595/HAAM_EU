@@ -1,0 +1,147 @@
+export interface TokenData {
+    access: string;
+    refresh?: string;
+  }
+  
+  /**
+   * Manager for JWT tokens with automatic refresh and request queueing.
+   */
+  export class TokenManager {
+    private static readonly ACCESS_TOKEN_KEY = 'accessToken';
+    private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
+    private static readonly API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api';
+  
+    private static refreshPromise: Promise<string> | null = null;
+  
+    /** Get access token from storage */
+    static getAccessToken(): string | null {
+      if (typeof window === 'undefined') return null;
+      return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+    }
+  
+    /** Get refresh token from storage */
+    static getRefreshToken(): string | null {
+      if (typeof window === 'undefined') return null;
+      return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    }
+  
+    /** Save both tokens */
+    static setTokens(tokens: TokenData): void {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.access);
+      if (tokens.refresh) {
+        localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refresh);
+      }
+    }
+  
+    /** Save only access token */
+    static setAccessToken(token: string): void {
+      if (typeof window === 'undefined') return;
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, token);
+    }
+  
+    /** Clear tokens */
+    static clearTokens(): void {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    }
+  
+    static hasAccessToken(): boolean {
+      return !!this.getAccessToken();
+    }
+  
+    static hasRefreshToken(): boolean {
+      return !!this.getRefreshToken();
+    }
+  
+    /**
+     * Refresh access token. Blocks concurrent refresh calls.
+     */
+    static async refreshAccessToken(): Promise<string> {
+      if (!this.refreshPromise) {
+        const refreshToken = this.getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        this.refreshPromise = (async () => {
+          const res = await fetch(`${this.API_BASE}/token/refresh/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: refreshToken }),
+          });
+          if (!res.ok) {
+            this.clearTokens();
+            const err = await res.json().catch(() => ({}));
+            throw new Error((err as { detail?: string }).detail || 'Failed to refresh token');
+          }
+          const data = await res.json();
+          this.setAccessToken(data.access);
+          if (data.refresh) {
+            localStorage.setItem(this.REFRESH_TOKEN_KEY, data.refresh);
+          }
+          return data.access as string;
+        })().finally(() => {
+          this.refreshPromise = null;
+        });
+      }
+      return this.refreshPromise;
+    }
+  
+    /**
+     * Perform fetch with automatic token header, refresh on 401, and retry.
+     */
+    static async fetchWithAuth(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
+      const headers = new Headers(init.headers as HeadersInit);
+      const token = this.getAccessToken();
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      const options: RequestInit = { ...init, headers };
+  
+      let response = await fetch(input, options);
+      if (response.status === 401 && this.hasRefreshToken()) {
+        try {
+          const newToken = await this.refreshAccessToken();
+          headers.set('Authorization', `Bearer ${newToken}`);
+          options.headers = headers;
+          response = await fetch(input, options);
+        } catch (e) {
+          this.clearTokens();
+          throw e;
+        }
+      }
+      return response;
+    }
+  
+    /**
+     * Verify access token validity via /token/verify endpoint.
+     */
+    static async verifyToken(): Promise<boolean> {
+      const token = this.getAccessToken();
+      if (!token) return false;
+      try {
+        const res = await fetch(`${this.API_BASE}/token/verify/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+  
+    /**
+     * Initialize storage listener to react to token changes in other tabs.
+     * Pass a callback to handle logout or UI update.
+     */
+    static initStorageListener(onTokenCleared: () => void): void {
+      if (typeof window === 'undefined') return;
+      window.addEventListener('storage', (event) => {
+        if (event.key === this.ACCESS_TOKEN_KEY && event.newValue === null) {
+          onTokenCleared();
+        }
+      });
+    }
+  }

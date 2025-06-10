@@ -1,7 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { Ads } from '@/types/IAds' // Импортируем тип объявления
+import { Ads } from '@/types/IAds'
+import { TokenManager } from '@/utils/tokenUtils'
+import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
 
 interface ErrorResponse {
     detail?: string
@@ -16,67 +18,45 @@ export const fetchMyAds = createAsyncThunk<
 >(
   'ads/fetchMyAds',
   async (userId, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы просмотреть ваши объявления')
-    }
-
-    // Также URL пишем inline:
-    const res = await fetch(`${API_BASE}/listings/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    if (!res.ok) {
-      const text = await res.text()
-      console.error('Ошибка при fetchMyAds:', text)
-      return rejectWithValue(`Ошибка ${res.status}: ${res.statusText}`)
-    }
-
-    let data
     try {
-      data = await res.json()
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/`)
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      const data = await res.json()
+
+      if (!data || !Array.isArray(data.results)) {
+        console.error('Неожиданная структура данных в fetchMyAds:', data)
+        return rejectWithValue('Неожиданная структура данных от сервера')
+      }
+
+      // Сразу фильтруем по owner.id, равному переданному userId
+      const myAds = data.results.filter((ad: Ads) => ad.owner.id === userId)
+      return myAds
     } catch (err) {
-      console.error('Не удалось распарсить JSON в fetchMyAds:', err)
-      return rejectWithValue('Неверный формат ответа от сервера')
+      console.error('Не удалось выполнить fetchMyAds:', err)
+      return rejectWithValue('Ошибка подключения')
     }
-
-    if (!data || !Array.isArray(data.results)) {
-      console.error('Неожиданная структура данных в fetchMyAds:', data)
-      return rejectWithValue('Неожиданная структура данных от сервера')
-    }
-
-    // Сразу фильтруем по owner.id, равному переданному userId
-    const myAds = data.results.filter((ad: Ads) => ad.owner.id === userId)
-    return myAds
   }
 )
-
 
 // ►►► Thunk для удаления «Моего» объявления
 export const deleteMyAd = createAsyncThunk<string, string, { rejectValue: string }>(
   'ads/deleteMyAd',
   async (slug, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы удалить объявление')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return slug
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-
-    const res = await fetch(`${API_BASE}/listings/${slug}/`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-
-    if (!res.ok) {
-      const text = await res.text()
-      console.error('Ошибка при deleteMyAd:', text)
-      return rejectWithValue(`Ошибка ${res.status}: ${res.statusText}`)
-    }
-
-    return slug
   }
 )
 
@@ -89,25 +69,21 @@ export const toggleMyAdStatus = createAsyncThunk<
 >(
   'ads/toggleMyAdStatus',
   async ({ slug, newStatus }, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы изменить статус объявления')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data as Ads
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-
-    const res = await fetch(`${API_BASE}/listings/${slug}/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ status: newStatus }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось изменить статус объявления')
-    }
-    return data as Ads
   }
 )
 
@@ -116,25 +92,21 @@ export const toggleMyAdStatus = createAsyncThunk<
 export const promoteMyAdToVip = createAsyncThunk<Ads, string, { rejectValue: string }>(
   'ads/promoteMyAdToVip',
   async (slug, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы повысить объявление в VIP')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_featured: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data as Ads
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-
-    const res = await fetch(`${API_BASE}/listings/${slug}/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ is_featured: true }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось повысить объявление в VIP')
-    }
-    return data as Ads
   }
 )
 
@@ -146,49 +118,41 @@ export const editAd = createAsyncThunk<
 >(
   'ads/editAd',
   async ({ slug, updatedData }, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы редактировать объявление')
-    }
-
     // Если updatedData — FormData, не указываем Content-Type, иначе ставим application/json
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
-    }
+    const headers: Record<string, string> = {}
 
     let body: BodyInit
     if (updatedData instanceof FormData) {
       body = updatedData
-      // Браузер сам проставит корректный Content-Type для FormData
     } else {
       headers['Content-Type'] = 'application/json'
       body = JSON.stringify(updatedData)
     }
 
-    const res = await fetch(`${API_BASE}/listings/${slug}/`, {
-      method: 'PATCH',
-      headers,
-      body,
-    })
-
-    let dataParsed: unknown
     try {
-      dataParsed = await res.json()
-    } catch (err) {
-      console.error('Не удалось распарсить JSON при editAd:', err)
-      return rejectWithValue('Неверный формат ответа от сервера при редактировании объявления')
-    }
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+        method: 'PATCH',
+        headers,
+        body,
+      })
 
-    if (!res.ok) {
-      // 401/403 → не авторизован или не является владельцем
-      if (res.status === 401 || res.status === 403) {
-        return rejectWithValue('У вас нет прав редактировать это объявление')
+      let dataParsed: unknown
+      try {
+        dataParsed = await res.json()
+      } catch (err) {
+        console.error('Не удалось распарсить JSON при editAd:', err)
+        return rejectWithValue('Неверный формат ответа от сервера при редактировании объявления')
       }
-      const errObj = dataParsed as ErrorResponse
-      return rejectWithValue(errObj.detail || 'Не удалось обновить объявление')
-    }
 
-    // Возвращаем приведённый к Ads объект
-    return dataParsed as Ads
+      if (!res.ok) {
+        const errObj = dataParsed as ErrorResponse
+        const msg = errObj.detail || (await AuthErrorHandler.handle(res))
+        return rejectWithValue(msg)
+      }
+
+      return dataParsed as Ads
+    } catch {
+      return rejectWithValue('Ошибка подключения')
+    }
   }
 )

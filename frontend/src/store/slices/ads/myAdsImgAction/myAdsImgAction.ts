@@ -1,12 +1,8 @@
-// src/store/slices/ads/myAdsImgAction/myAdsImgAction.ts
-
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { TokenManager } from "@/utils/tokenUtils";
+import { AuthErrorHandler } from "@/utils/authErrorHandler";
 
-const API_BASE = "http://localhost:8000/api";  // базовый путь до DRF
-
-interface ErrorResponse {
-  detail?: string;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api"; 
 
 export const addListingImage = createAsyncThunk<
   { id: number; image: string; is_primary: boolean; created_at: string },
@@ -15,49 +11,31 @@ export const addListingImage = createAsyncThunk<
 >(
   "ads/addListingImage",
   async ({ formData }, { rejectWithValue }) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return rejectWithValue("Пожалуйста, войдите, чтобы добавить изображение");
-    }
-
-    // Правильный URL: /api/listings/images/
-    const res = await fetch(`${API_BASE}/listings/images/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Content-Type не ставим: браузер сам добавит multipart/form-data
-      },
-      body: formData,
-    });
-
-    // Если ответ не в диапазоне 2xx — обрабатываем ошибку
-    if (!res.ok) {
-      let errorText: string;
-      try {
-        // DRF часто возвращает JSON вида { "detail": "…" }
-        const dataErr = await res.json();
-        errorText = (dataErr as ErrorResponse).detail || JSON.stringify(dataErr);
-      } catch {
-        // Если тело ответа не JSON (например, HTML-страница 401/403)
-        errorText = `Ошибка сервера: ${res.status} ${res.statusText}`;
-      }
-      return rejectWithValue(errorText);
-    }
-
-    // Если всё ок, пытаемся распарсить JSON
-    let data: unknown;
     try {
-      data = await res.json();
-    } catch (err) {
-      console.error("Не удалось распарсить JSON при addListingImage:", err);
-      return rejectWithValue("Неверный формат ответа от сервера при добавлении изображения");
-    }
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/images/`, {
+        method: "POST",
+        body: formData,
+      });
 
-    // Ожидаем, что сервер вернёт { id, image, is_primary, created_at }
-    return data as { id: number; image: string; is_primary: boolean; created_at: string };
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res);
+        return rejectWithValue(msg);
+      }
+
+      let data: unknown;
+      try {
+        data = await res.json();
+      } catch (err) {
+        console.error("Не удалось распарсить JSON при addListingImage:", err);
+        return rejectWithValue("Неверный формат ответа от сервера при добавлении изображения");
+      }
+
+      return data as { id: number; image: string; is_primary: boolean; created_at: string };
+    } catch {
+      return rejectWithValue("Ошибка подключения");
+    }
   }
 );
-
 
 //2) Удаление существующего изображения (DELETE /api/listings/images/{id}/)
 export const deleteListingImage = createAsyncThunk<
@@ -67,37 +45,22 @@ export const deleteListingImage = createAsyncThunk<
 >(
   "ads/deleteListingImage",
   async ({ imageId }, { rejectWithValue }) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return rejectWithValue("Пожалуйста, войдите, чтобы удалить изображение");
-    }
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/images/${imageId}/`, {
+        method: "DELETE",
+      });
 
-    // URL: /api/listings/images/{imageId}/
-    const res = await fetch(`${API_BASE}/listings/images/${imageId}/`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      let errorText: string;
-      try {
-        // иногда DRF отдаёт JSON { "detail": "…" }
-        const dataErr = await res.json();
-        errorText = (dataErr as ErrorResponse).detail || JSON.stringify(dataErr);
-      } catch {
-        // Может вернуться HTML-страница ошибки
-        errorText = `Ошибка при удалении: ${res.status} ${res.statusText}`;
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res);
+        return rejectWithValue(msg);
       }
-      return rejectWithValue(errorText);
-    }
 
-    // Если 204 или 200, просто возвращаем imageId
-    return imageId;
+      return imageId;
+    } catch {
+      return rejectWithValue("Ошибка подключения");
+    }
   }
 );
-
 
 //3) Обновление существующего изображения (PATCH /api/listings/images/{id}/)
 export const updateListingImage = createAsyncThunk<
@@ -107,45 +70,43 @@ export const updateListingImage = createAsyncThunk<
 >(
   "ads/updateListingImage",
   async ({ id, imageFile, is_primary }, { rejectWithValue }) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return rejectWithValue("Пожалуйста, войдите, чтобы обновить изображение");
-    }
-
+    // Собираем FormData: будем включать только те поля, что переданы
     const formData = new FormData();
-    if (imageFile) formData.append("image", imageFile);
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
     if (typeof is_primary === "boolean") {
       formData.append("is_primary", is_primary ? "true" : "false");
     }
 
-    // URL: /api/listings/images/{id}/
-    const res = await fetch(`${API_BASE}/listings/images/${id}/`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
-
-    if (!res.ok) {
-      let errorText: string;
-      try {
-        const dataErr = await res.json();
-        errorText = (dataErr as ErrorResponse).detail || JSON.stringify(dataErr);
-      } catch {
-        errorText = `Ошибка сервера: ${res.status} ${res.statusText}`;
-      }
-      return rejectWithValue(errorText);
-    }
-
-    let data: unknown;
     try {
-      data = await res.json();
-    } catch (err) {
-      console.error("Не удалось распарсить JSON при updateListingImage:", err);
-      return rejectWithValue("Неверный формат ответа от сервера при обновлении изображения");
-    }
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/images/${id}/`, {
+        method: "PATCH",
+        body: formData,
+      });
 
-    return data as { id: number; image: string; is_primary: boolean; created_at: string };
+      let data: unknown;
+      try {
+        data = await res.json();
+      } catch (err) {
+        console.error("Не удалось распарсить JSON при updateListingImage:", err);
+        return rejectWithValue("Неверный формат ответа от сервера при обновлении изображения");
+      }
+
+      if (!res.ok) {
+        const errObj = data as { detail?: string };
+        const msg = errObj.detail || (await AuthErrorHandler.handle(res));
+        return rejectWithValue(msg);
+      }
+
+      return data as {
+        id: number;
+        image: string;
+        is_primary: boolean;
+        created_at: string;
+      };
+    } catch {
+      return rejectWithValue("Ошибка подключения");
+    }
   }
 );

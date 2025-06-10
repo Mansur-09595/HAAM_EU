@@ -1,6 +1,7 @@
-import {  createSlice, PayloadAction  } from '@reduxjs/toolkit'
-import { loginUser, checkAuth, refreshToken } from './authAction' // Импортируем функции для работы с API  
-import {  Users } from '@/types/IUsers' // Импортируем тип пользователя
+import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { loginUser, checkAuth, refreshToken } from './authAction'
+import { Users } from '@/types/IUsers'
+import { TokenManager } from '@/utils/tokenUtils'
 
 interface AuthState {
   user: Users | null
@@ -26,8 +27,7 @@ const authSlice = createSlice({
       state.user = null
       state.accessToken = null
       state.refreshToken = null
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
+      TokenManager.clearTokens()
     },
   },
   extraReducers: builder => {

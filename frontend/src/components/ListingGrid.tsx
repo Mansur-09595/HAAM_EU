@@ -48,10 +48,10 @@ export default function ListingGrid({ listings }: Props) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="bg-white/80 hover:bg-white rounded-full"
+                className="absolute top-2 right-2 bg-white/80 hover:bg-white rounded-full"
                 onClick={() => console.log('Toggle favorite')}
               >
-                <Heart className="h-5 w-5 text-red-500" />
+                <Heart className="h-5 w-5" />
                 <span className="sr-only">Добавить в избранное</span>
               </Button>
 
@@ -63,7 +63,7 @@ export default function ListingGrid({ listings }: Props) {
                   className="bg-white/80 hover:bg-white rounded-full"
                   onClick={() =>
                     dispatch(
-                      toggleFeatured({ id: listing.id, is_featured: !listing.is_featured })
+                      toggleFeatured({ slug: listing.slug, is_featured: !listing.is_featured })
                     )
                   }
                 >

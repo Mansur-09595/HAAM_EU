@@ -1,7 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import type { Users } from '@/types/IUsers'
+import { TokenManager } from '@/utils/tokenUtils'
+import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
 
 // Thunk: логин (получаем access+refresh+user)
 export const loginUser = createAsyncThunk<
@@ -17,11 +19,12 @@ export const loginUser = createAsyncThunk<
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
       })
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
       const data = await res.json()
-      if (!res.ok) return rejectWithValue(data.detail ?? 'Ошибка авторизации')
-      // Сохраняем оба токена
-      localStorage.setItem('accessToken', data.access)
-      localStorage.setItem('refreshToken', data.refresh)
+      TokenManager.setTokens({ access: data.access, refresh: data.refresh })
       return data
     } catch {
       return rejectWithValue('Ошибка подключения')
@@ -37,19 +40,9 @@ export const refreshToken = createAsyncThunk<
 >(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
-    const refresh = localStorage.getItem('refreshToken')
-    if (!refresh) return rejectWithValue('No refresh token')
     try {
-      const res = await fetch(`${API_BASE}/token/refresh/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh }),
-      })
-      const data = await res.json()
-      if (!res.ok) return rejectWithValue(data.detail ?? 'Не удалось обновить токен')
-      // Обновляем access
-      localStorage.setItem('accessToken', data.access)
-      return { access: data.access }
+      const access = await TokenManager.refreshAccessToken()
+      return { access }
     } catch {
       return rejectWithValue('Ошибка подключения')
     }
@@ -60,14 +53,13 @@ export const refreshToken = createAsyncThunk<
 export const checkAuth = createAsyncThunk<Users, void, { rejectValue: string }>(
   'auth/check',
   async (_, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) return rejectWithValue('No token')
     try {
-      const res = await fetch(`${API_BASE}/users/me/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/me/`)
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
       const user = await res.json()
-      if (!res.ok) return rejectWithValue('Не авторизован')
       return user as Users
     } catch {
       return rejectWithValue('Ошибка подключения')

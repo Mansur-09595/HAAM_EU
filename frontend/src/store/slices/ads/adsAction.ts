@@ -1,8 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { Ads } from '@/types/IAds' // Импортируем тип объявления
+import { Ads } from '@/types/IAds'
+import { TokenManager } from '@/utils/tokenUtils'
+import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = 'http://localhost:8000/api'
-
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
 
 // 🔁 Загрузка всех объявлений
 export const fetchAds = createAsyncThunk<
@@ -85,31 +86,22 @@ export const addAd = createAsyncThunk<
 >(
   'ads/addAd',
   async (newAd, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      // нет токена вообще
-      return rejectWithValue('Пожалуйста, войдите, чтобы добавить объявление')
-    }
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/`, {
+        method: 'POST',
+        body: newAd,
+      })
 
-    const res = await fetch(`${API_BASE}/listings/`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: newAd,
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      // 401/403 → неавторизован
-      if (res.status === 401 || res.status === 403) {
-        return rejectWithValue('Пожалуйста, войдите, чтобы добавить объявление')
+      const data = await res.json()
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
       }
-      // остальные ошибки API
-      return rejectWithValue(data.detail || 'Ошибка при добавлении объявления')
-    }
 
-    return data as Ads
+      return data as Ads
+    } catch {
+      return rejectWithValue('Ошибка подключения')
+    }
   }
 )
 
@@ -133,91 +125,20 @@ export const toggleFeatured = createAsyncThunk<
 >(
   'ads/toggleFeatured',
   async ({ slug, is_featured }, { rejectWithValue }) => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      return rejectWithValue('Пожалуйста, войдите, чтобы изменить VIP-статус')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_featured }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data as Ads
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-
-    const res = await fetch(`${API_BASE}/listings/${slug}/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ is_featured }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось обновить VIP-статус')
-    }
-    return data as Ads
   }
 )
-
-
-
-// ►►► Новый Thunk: Обновление изображения объявления
-// Тип возврата: мы ожидаем, что сервер вернёт тот же JSON, что и при создании:
-// { id, image, is_primary, created_at }
-export const updateListingImage = createAsyncThunk<
-  {
-    id: number;
-    image: string;
-    is_primary: boolean;
-    created_at: string;
-  },
-  {
-    id: number;               // id существующего ListingImage
-    imageFile?: File;         // если нужно заменить файл
-    is_primary?: boolean;     // если нужно только поменять флаг primary
-  },
-  { rejectValue: string }
->(
-  "ads/updateListingImage",
-  async ({ id, imageFile, is_primary }, { rejectWithValue }) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return rejectWithValue("Пожалуйста, войдите, чтобы обновить изображение");
-    }
-
-    // Собираем FormData: будем включать только те поля, что переданы
-    const formData = new FormData();
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-    if (typeof is_primary === "boolean") {
-      formData.append("is_primary", is_primary ? "true" : "false");
-    }
-
-    const res = await fetch(`${API_BASE}/listings/images/${id}/`, {
-      method: "PATCH", // или "PUT", если вы хотите полную замену
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // Content-Type не ставим — браузер проставит multipart/form-data boundary
-      },
-      body: formData,
-    });
-
-    let data: unknown;
-    try {
-      data = await res.json();
-    } catch (err) {
-      console.error("Не удалось распарсить JSON при updateListingImage:", err);
-      return rejectWithValue("Неверный формат ответа от сервера при обновлении изображения");
-    }
-
-    if (!res.ok) {
-      // Если сервер вернул ошибку (например, 400/403)
-      const errObj = data as { detail?: string };
-      return rejectWithValue(errObj.detail || "Не удалось обновить изображение");
-    }
-
-    return data as {
-      id: number;
-      image: string;
-      is_primary: boolean;
-      created_at: string;
-    };
-  }
-);

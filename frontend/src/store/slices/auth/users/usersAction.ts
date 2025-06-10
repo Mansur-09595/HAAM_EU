@@ -1,15 +1,17 @@
 // src/store/slices/auth/users/usersAction.ts
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import type { Users } from '@/types/IUsers'
+import { TokenManager } from '@/utils/tokenUtils'
+import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
 
 // Ваш «первичный» токен из бэка
 const DEMO_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NjU1NTY4LCJpYXQiOjE3NDY2NTUyNjgsImp0aSI6IjU5Zjc0NDRkNWZiNDQ1MGY4MjZjYmFmOGRlMGM1MjlkIiwidXNlcl9pZCI6OX0.D-o9LDagn45jKUStYtEx_uSpgUBEsg8goJxOAEBIHp8'
 
 // Хелпер для заголовка авторизации: сначала из localStorage, иначе DEMO_ACCESS_TOKEN
 const getAuthHeader = () => {
-  const token = localStorage.getItem('accessToken') || DEMO_ACCESS_TOKEN
+  const token = TokenManager.getAccessToken() || DEMO_ACCESS_TOKEN
   return { Authorization: `Bearer ${token}` }
 }
 
@@ -17,17 +19,22 @@ const getAuthHeader = () => {
 export const fetchUsers = createAsyncThunk<Users[], void, { rejectValue: string }>(
   'users/fetchAll',
   async (_, { rejectWithValue }) => {
-    const res = await fetch(`${API_BASE}/users/`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-    })
-    const data = (await res.json()) as { results: Users[]; detail?: string }
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось загрузить пользователей')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+      })
+      const data = (await res.json()) as { results: Users[]; detail?: string }
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data.results
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-    return data.results
   }
 )
 
@@ -35,17 +42,22 @@ export const fetchUsers = createAsyncThunk<Users[], void, { rejectValue: string 
 export const fetchUserById = createAsyncThunk<Users, number, { rejectValue: string }>(
   'users/fetchById',
   async (id, { rejectWithValue }) => {
-    const res = await fetch(`${API_BASE}/users/${id}/`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-    })
-    const data = (await res.json()) as Users & { detail?: string }
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось загрузить пользователя')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/${id}/`, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+      })
+      const data = (await res.json()) as Users & { detail?: string }
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-    return data
   }
 )
 
@@ -57,37 +69,47 @@ export const updateUser = createAsyncThunk<
 >(
   'users/update',
   async (payload, { rejectWithValue }) => {
-    const res = await fetch(`${API_BASE}/users/${payload.id}/`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-      body: JSON.stringify(payload),
-    })
-    const data = (await res.json()) as Users & { detail?: string }
-    if (!res.ok) {
-      return rejectWithValue(data.detail ?? 'Не удалось обновить пользователя')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/${payload.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        body: JSON.stringify(payload),
+      })
+      const data = (await res.json()) as Users & { detail?: string }
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      return data
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-    return data
   }
 )
-
 // DELETE /api/users/:id/
 export const deleteUser = createAsyncThunk<number, number, { rejectValue: string }>(
   'users/delete',
   async (id, { rejectWithValue }) => {
-    const res = await fetch(`${API_BASE}/users/${id}/`, {
-      method: 'DELETE',
-      headers: getAuthHeader(),
-    })
-    if (!res.ok) {
-      const data = (await res.json()) as { detail?: string }
-      return rejectWithValue(data.detail ?? 'Не удалось удалить пользователя')
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/${id}/`, {
+        method: 'DELETE',
+        headers: getAuthHeader(),
+      })
+      if (!res.ok) {
+        const data = (await res.json()) as { detail?: string }
+        const msg = data.detail || (await AuthErrorHandler.handle(res))
+        return rejectWithValue(msg)
+      }
+      return id
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-    return id
   }
 )
+
 
 // POST /api/users/
 export const createUser = createAsyncThunk<
@@ -97,20 +119,22 @@ export const createUser = createAsyncThunk<
 >(
   'users/create',
   async (formData, { rejectWithValue }) => {
-    const res = await fetch(`${API_BASE}/users/`, {
-      method: 'POST',
-      // ↘ НЕ указываем Content-Type — fetch сам добавит multipart boundary
-      body: formData,
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      console.log('CreateUser errors:', data)
-      // собираем сообщения из объекта ошибок
-      const message = typeof data === 'object'
-        ? Object.values(data).flat().join('; ')
-        : data.detail || 'Не удалось создать пользователя'
-      return rejectWithValue(message)
+    try {
+      const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/`, {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        console.log('CreateUser errors:', data)
+        const message = typeof data === 'object'
+          ? Object.values(data).flat().join('; ')
+          : data.detail || (await AuthErrorHandler.handle(res))
+        return rejectWithValue(message)
+      }
+      return data as Users
+    } catch {
+      return rejectWithValue('Ошибка подключения')
     }
-    return data as Users
   }
 )

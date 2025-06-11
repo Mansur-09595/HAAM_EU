@@ -116,29 +116,3 @@ export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: st
     return (await res.json()) as Ads
   }
 )
-
-// ⭐ VIP-статус объявления (изменение is_featured)
-export const toggleFeatured = createAsyncThunk<
-  Ads,
-  { slug: string; is_featured: boolean },
-  { rejectValue: string }
->(
-  'ads/toggleFeatured',
-  async ({ slug, is_featured }, { rejectWithValue }) => {
-    try {
-      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_featured }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        const msg = await AuthErrorHandler.handle(res)
-        return rejectWithValue(msg)
-      }
-      return data as Ads
-    } catch {
-      return rejectWithValue('Ошибка подключения')
-    }
-  }
-)

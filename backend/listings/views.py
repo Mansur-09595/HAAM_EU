@@ -102,14 +102,15 @@ class ListingViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
-    def favorite(self, request, pk=None):
-        listing = self.get_object()
+    def favorite(self, request, slug=None):
+        listing = self.get_object()  # под капотом будет искать по slug
         fav, created = Favorite.objects.get_or_create(user=request.user, listing=listing)
         code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         return Response({'status': 'added' if created else 'already in favorites'}, status=code)
 
-    @action(detail=True, methods=['post'])
-    def unfavorite(self, request, pk=None):
+
+    @action(detail=True, methods=['delete'])  # рекомендую поставить DELETE для unfavorite
+    def unfavorite(self, request, slug=None):
         listing = self.get_object()
         try:
             fav = Favorite.objects.get(user=request.user, listing=listing)
@@ -117,6 +118,7 @@ class ListingViewSet(viewsets.ModelViewSet):
             return Response({'status': 'removed'}, status=status.HTTP_204_NO_CONTENT)
         except Favorite.DoesNotExist:
             return Response({'status': 'not in favorites'}, status=status.HTTP_404_NOT_FOUND)
+
 
     @action(detail=False, methods=['get'])
     def my_listings(self, request):

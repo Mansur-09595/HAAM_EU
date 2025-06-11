@@ -1,5 +1,5 @@
 import adsReducer from './slices/ads/adsSlice'
-import favoritesReducer from './slices/favoritesSlice'
+import favoritesReducer from './slices/favorites/favoritesSlice'
 import authReducer from './slices/auth/authSlice'
 import categoriesReducer from './slices/categories/categoriesSlice'
 import adsByCategoryReducer from './slices/categories/extracted/adsByCategorySlice'

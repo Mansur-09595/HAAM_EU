@@ -60,13 +60,14 @@ export interface Ads {
   }[]
   is_favorited: boolean | string
 }
-  export type AdPost = {
-    title: string
-    description: string
-    price: string
-    currency: string
-    category: number
-    location: string
-    images?: string[]  // или File[] если будешь использовать FormData
-    videos?: string[]
-  }
+
+export type AdPost = {
+  title: string
+  description: string
+  price: string
+  currency: string
+  category: number
+  location: string
+  images?: string[]  // или File[] если будешь использовать FormData
+  videos?: string[]
+}

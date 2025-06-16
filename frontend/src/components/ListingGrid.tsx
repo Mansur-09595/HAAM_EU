@@ -6,7 +6,7 @@ import { Heart, Star, StarOff } from 'lucide-react'
 import { Ads } from '@/types/IAds'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { useAppDispatch, useAppSelector } from '@/store/store'
+import { useAppDispatch, useAppSelector, RootState } from '@/store/store'
 import { toggleFeatured, toggleFavorite } from '@/store/slices/favorites/favoritesAction'
 
 type Props = {
@@ -15,7 +15,9 @@ type Props = {
 
 export default function ListingGrid({ listings }: Props) {
   const dispatch = useAppDispatch()
-  const isAdmin = useAppSelector(state => state.users)
+  const currentUser = useAppSelector((state: RootState) => state.auth.user)
+  const isAdmin = currentUser?.is_staff === true
+
 
   if (!listings || listings.length === 0) {
     return <p>Нет объявлений</p>

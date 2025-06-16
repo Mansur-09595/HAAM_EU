@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAppDispatch, useAppSelector } from '@/store/store'
-import { toggleFeatured } from '@/store/slices/ads/adsAction'
+import { toggleFeatured } from '@/store/slices/favorites/favoritesAction'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,8 +17,8 @@ export default function FeaturedListingsVIP() {
   // Фильтруем VIP-объявления
   const vipAds = ads.filter((ad: Ads) => ad.is_featured)
 
-  const handleToggle = (id: number, isFeatured: boolean) => {
-    dispatch(toggleFeatured({ id, is_featured: !isFeatured }))
+  const handleToggle = (slug: string, isFeatured: boolean) => {
+    dispatch(toggleFeatured({ slug, is_featured: !isFeatured }))
   }
 
   if (vipAds.length === 0) {
@@ -50,7 +50,7 @@ export default function FeaturedListingsVIP() {
                 variant="ghost"
                 size="icon"
                 className="absolute top-2 right-2 bg-white/80 rounded-full"
-                onClick={() => handleToggle(ad.id, ad.is_featured)}
+                onClick={() => handleToggle(ad.slug, ad.is_featured)}
               >
                 {ad.is_featured ? (
                   <Star className="h-5 w-5 text-yellow-500" />

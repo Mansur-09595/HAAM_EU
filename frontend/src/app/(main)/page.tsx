@@ -34,7 +34,7 @@ export default function HomePage() {
   const normalizedSearch = (searchTerm ?? '').toLowerCase()
 
   const isSearchActive = normalizedSearch.trim() !== ''
-  const isPriceFilterActive = minPrice > 0 || maxPrice < 1000000
+  const isPriceFilterActive = minPrice > 0 || maxPrice < 10000
 
   const filteredAds = ads.filter((ad) => {
     const matchesTitle = isSearchActive
@@ -109,7 +109,7 @@ export default function HomePage() {
           <Input
             type="number"
             placeholder="Цена до"
-            onChange={(e) => dispatch(setMaxPrice(Number(e.target.value) || 1000000))}
+            onChange={(e) => dispatch(setMaxPrice(Number(e.target.value) || 10000))}
             className="w-full sm:w-1/4"
           />
         </div>

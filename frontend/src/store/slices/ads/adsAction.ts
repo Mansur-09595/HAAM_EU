@@ -36,9 +36,9 @@ export const fetchAds = createAsyncThunk<
     params.set('page_size', String(8))
     if (category) params.set('category_slug', category)
     if (city) params.set('location', city)
-    if (searchTerm) params.set('searchTerm', searchTerm)
-    if (minPrice !== undefined) params.set('minPrice', String(minPrice))
-    if (maxPrice !== undefined) params.set('maxPrice', String(maxPrice))
+    if (searchTerm) params.set('search', searchTerm)
+    if (minPrice !== undefined) params.set('price_min', String(minPrice))
+    if (maxPrice !== undefined) params.set('price_max', String(maxPrice))
 
     const res = await fetch(`${API_BASE}/listings/?${params.toString()}`)
      // Если ответ не OK, читаем текст (HTML или сообщение об ошибке)

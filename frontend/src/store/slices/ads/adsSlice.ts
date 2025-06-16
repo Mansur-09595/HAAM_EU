@@ -35,7 +35,7 @@ const initialState: AdsState = {
   city: '',
   searchTerm: '',
   minPrice: 0,
-  maxPrice: 1000000,
+  maxPrice: 10000, // Максимальная цена по умолчанию
 }
 
 const adsSlice = createSlice({

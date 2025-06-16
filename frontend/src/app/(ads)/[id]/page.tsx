@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 
-export default async function AdPage(props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params // ✅ Ждём промис
+export default async function AdPage({ params }: { params: { id: string } }) {
+  const { id } = params
+
 
   if (!id) return notFound()
 

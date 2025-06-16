@@ -96,7 +96,7 @@ export default function ListingDetailPage() {
       {/* Назад */}
       <div className="mb-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/listings">
+          <Link href="/ads">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Назад к объявлениям
           </Link>

@@ -133,11 +133,11 @@ export default function ProfilePage() {
                 <Button variant="ghost" className="w-full justify-start" asChild>
                   <Link href="/notifications"><Bell className="mr-2 h-4 w-4" />Уведомления</Link>
                 </Button>
-                <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link href="/payments"><CreditCard className="mr-2 h-4 w-4" />Платежи</Link>
+                <Button variant="ghost" className="w-full justify-start line-through text-gray-500" asChild>
+                  <Link href="#"><CreditCard className="mr-2 h-4 w-4 line-through text-gray-500" />Платежи</Link>
                 </Button>
-                <Button variant="ghost" className="w-full justify-start" asChild>
-                  <Link href="/settings"><Settings className="mr-2 h-4 w-4" />Настройки</Link>
+                <Button variant="ghost" className="w-full justify-start line-through text-gray-500" asChild>
+                  <Link href="#"><Settings className="mr-2 h-4 w-4" />Настройки</Link>
                 </Button>
                 <Button
                   variant="ghost"
@@ -153,7 +153,7 @@ export default function ProfilePage() {
         {/* Main content */}
         <main className="flex-1">
           <Tabs defaultValue="personal" className="space-y-4">
-            <TabsList>
+            <TabsList className="mb-4 whitespace-nowrap flex gap-2 px-1 sm:justify-center">
               <TabsTrigger value="personal">Личные данные</TabsTrigger>
               <TabsTrigger value="security">Безопасность</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { fetchAds, addAd, fetchAdBySlug } from './adsAction' // Импортируем функции для работы с API
+import { toggleFavorite } from "../favorites/favoritesAction"
 import { Ads } from '@/types/IAds' // Импортируем тип объявления
 
 // Состояние для объявлений
@@ -136,6 +137,15 @@ const adsSlice = createSlice({
       .addCase(fetchAdBySlug.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Ошибка загрузки объявления'
+      })
+      // Обновляем флаг is_favorited после успешного запроса
+      .addCase(toggleFavorite.fulfilled, (state, { payload }) => {
+        state.items = state.items.map(ad =>
+          ad.slug === payload.slug ? { ...ad, is_favorited: payload.isNowFavorited } : ad
+        )
+        if (state.selectedAd && state.selectedAd.slug === payload.slug) {
+          state.selectedAd = { ...state.selectedAd, is_favorited: payload.isNowFavorited }
+        }
       })
   },
 })

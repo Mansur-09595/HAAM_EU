@@ -89,26 +89,26 @@ export const toggleMyAdStatus = createAsyncThunk<
 
 
 // ►►► Thunk для повышения «Моего» объявления до VIP
-export const promoteMyAdToVip = createAsyncThunk<Ads, string, { rejectValue: string }>(
-  'ads/promoteMyAdToVip',
-  async (slug, { rejectWithValue }) => {
-    try {
-      const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_featured: true }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        const msg = await AuthErrorHandler.handle(res)
-        return rejectWithValue(msg)
-      }
-      return data as Ads
-    } catch {
-      return rejectWithValue('Ошибка подключения')
-    }
-  }
-)
+// export const promoteMyAdToVip = createAsyncThunk<Ads, string, { rejectValue: string }>(
+//   'ads/promoteMyAdToVip',
+//   async (slug, { rejectWithValue }) => {
+//     try {
+//       const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`, {
+//         method: 'PATCH',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ is_featured: true }),
+//       })
+//       const data = await res.json()
+//       if (!res.ok) {
+//         const msg = await AuthErrorHandler.handle(res)
+//         return rejectWithValue(msg)
+//       }
+//       return data as Ads
+//     } catch {
+//       return rejectWithValue('Ошибка подключения')
+//     }
+//   }
+// )
 
 // ►►► Новый Thunk: Редактирование существующего объявления
 export const editAd = createAsyncThunk<

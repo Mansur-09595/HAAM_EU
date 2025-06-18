@@ -6,7 +6,6 @@ import {
   fetchMyAds,
   deleteMyAd,
   toggleMyAdStatus,
-  promoteMyAdToVip,
 } from '@/store/slices/ads/myAdsAction/myAdsAction'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -79,21 +78,21 @@ export default function MyListingsPage() {
   }
 
   // Повысить «моё» объявление до VIP
-  const onPromote = async (slug: string) => {
-    try {
-      await dispatch(promoteMyAdToVip(slug)).unwrap()
-      toast({
-        title: 'Объявление поднято в VIP',
-        description: 'Ваше объявление теперь отображается в VIP-секции',
-      })
-    } catch (err) {
-      toast({
-        title: 'Ошибка',
-        description: typeof err === 'string' ? err : 'Не удалось повысить объявление до VIP',
-        variant: 'destructive',
-      })
-    }
-  }
+  // const onPromote = async (slug: string) => {
+  //   try {
+  //     await dispatch(promoteMyAdToVip(slug)).unwrap()
+  //     toast({
+  //       title: 'Объявление поднято в VIP',
+  //       description: 'Ваше объявление теперь отображается в VIP-секции',
+  //     })
+  //   } catch (err) {
+  //     toast({
+  //       title: 'Ошибка',
+  //       description: typeof err === 'string' ? err : 'Не удалось повысить объявление до VIP',
+  //       variant: 'destructive',
+  //     })
+  //   }
+  // }
 
   if (!user) {
     return <p className="p-4 text-red-600">⛔ Доступ только для авторизованных пользователей.</p>
@@ -130,7 +129,6 @@ export default function MyListingsPage() {
                   listing={listing}
                   onDelete={onDelete}
                   onToggleStatus={onToggleStatus}
-                  onPromote={onPromote}
                 />
               ))}
             {listings.filter((l) => l.status === 'active').length === 0 && (
@@ -149,7 +147,6 @@ export default function MyListingsPage() {
                   listing={listing}
                   onDelete={onDelete}
                   onToggleStatus={onToggleStatus}
-                  onPromote={onPromote}
                 />
               ))}
             {listings.filter((l) => l.status === 'archived').length === 0 && (
@@ -167,7 +164,6 @@ export default function MyListingsPage() {
                   listing={listing}
                   onDelete={onDelete}
                   onToggleStatus={onToggleStatus}
-                  onPromote={onPromote}
                 />
               ))
             ) : (
@@ -184,10 +180,9 @@ interface ListingCardProps {
   listing: Ads
   onDelete: (slug: string) => void
   onToggleStatus: (slug: string, currentStatus: string) => void
-  onPromote: (slug: string) => void
 }
 
-function ListingCard({ listing, onDelete, onToggleStatus, onPromote }: ListingCardProps) {
+function ListingCard({ listing, onDelete, onToggleStatus }: ListingCardProps) {
   return (
     <Card className="overflow-hidden group relative">
       <div className="relative">
@@ -225,12 +220,12 @@ function ListingCard({ listing, onDelete, onToggleStatus, onPromote }: ListingCa
               {listing.status === 'active' ? 'Деактивировать' : 'Активировать'}
             </DropdownMenuItem>
 
-            {!listing.is_featured && (
+            {/* {!listing.is_featured && (
               <DropdownMenuItem onClick={() => onPromote(listing.slug)}>
                 <Badge className="mr-2 h-4 px-1 bg-yellow-500 hover:bg-yellow-600">VIP</Badge>
                 Поднять в VIP
               </DropdownMenuItem>
-            )}
+            )} */}
 
             <DropdownMenuSeparator />
 

@@ -8,6 +8,8 @@ import { store, persistor, useAppDispatch } from '@/store/store'
 import { checkAuth, refreshToken, } from '@/store/slices/auth/authAction'
 import { logout } from '@/store/slices/auth/authSlice'
 import { jwtDecode } from 'jwt-decode'
+import { useAppSelector } from '@/store/store'
+import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket'
 
 type JwtPayload = { exp: number }
 
@@ -37,11 +39,20 @@ function AuthInitializer() {
 
   return null
 }
+
+function NotificationListener() {
+  const userId = useAppSelector(state => state.auth.user?.id ?? null)
+  useNotificationWebSocket(userId)
+  return null
+}
+
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <AuthInitializer />
+        <NotificationListener />
         {children}
       </PersistGate>
     </Provider>

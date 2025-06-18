@@ -14,3 +14,7 @@ class IsSelfOrAdmin(permissions.BasePermission):
             return True
         # Обычный пользователь может изменять только свой профиль
         return obj.id == request.user.id
+
+class IsSuperUser(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_superuser

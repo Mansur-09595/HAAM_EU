@@ -10,11 +10,13 @@ export default function UsersPage() {
     const users = useAppSelector(state => state.users.list)
     const loading = useAppSelector(state => state.users.loading)
     const error = useAppSelector(state => state.users.error)
+    const currentUser = useAppSelector(state => state.auth.user)
   
     useEffect(() => {
       dispatch(fetchUsers())
     }, [dispatch])
   
+    if (!currentUser?.is_staff) return <p>Access denied</p>
     if (loading) return <p>Загрузка...</p>
     if (error)   return <p className="text-red-500">Ошибка: {error}</p>
   

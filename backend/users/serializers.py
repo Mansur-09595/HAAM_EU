@@ -31,8 +31,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
     phone     = serializers.CharField(
         required=False, allow_blank=True, allow_null=True
     )
-    avatar    = serializers.URLField(
-        required=False, allow_blank=True, allow_null=True
+    avatar    = serializers.ImageField(
+        required=False, allow_null=True
     )
     bio       = serializers.CharField(
         required=False, allow_blank=True, allow_null=True

@@ -7,11 +7,12 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/toaster'
+import CookieBanner from '@/components/CookieBanner'
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
-  title: 'DIaẋedarş — Avito Clone',
+  title: 'HAAM.be — "Сервис Объявлений в Европе"',
   description: 'Объявления для вайнахов в Европе',
 }
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <CookieBanner />
             <Toaster />
           </Providers>
         </ThemeProvider>

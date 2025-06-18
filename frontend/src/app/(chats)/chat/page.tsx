@@ -14,23 +14,26 @@ import { Search, Send } from 'lucide-react'
 import { useChatWebSocket } from '@/hooks/useChatWebSocket'
 
 export default function MessagesPage() {
-  console.log('[MessagesPage] Рендер компонента MessagesPage')
-
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[MessagesPage] Рендер компонента MessagesPage')
+  }
   const dispatch = useAppDispatch()
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const currentUser = useAppSelector(state => state.auth.user)
   const currentUserId = currentUser?.id ?? null
-  console.log('[MessagesPage] currentUserId:', currentUserId)
-
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[MessagesPage] currentUserId:', currentUserId)
+  }
   const { items: conversations, loading: convLoading, error: convError } = useAppSelector(
     state => state.chat.conversations
   )
   const messagesByConversation = useAppSelector(state => state.chat.messagesByConversation)
 
-  console.log('[MessagesPage] messagesByConversation:', messagesByConversation)
-
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[MessagesPage] messagesByConversation:', messagesByConversation)
+  }
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null)
   const [newMessage, setNewMessage] = useState('')
 
@@ -56,8 +59,9 @@ export default function MessagesPage() {
 
   // Загружаем сообщения при смене activeConversationId
   useEffect(() => {
-    console.log('[MessagesPage] useEffect → activeConversationId изменилась:', activeConversationId)
-    if (activeConversationId !== null) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessagesPage] useEffect → activeConversationId изменилась:', activeConversationId)
+    }    if (activeConversationId !== null) {
       dispatch(fetchMessages(activeConversationId)).unwrap().catch(err => {
         if (err === 'logout') router.push('/login')
       })
@@ -69,8 +73,9 @@ export default function MessagesPage() {
   ? (messagesByConversation[activeConversationId]?.messages || [])
   : []
 
-  console.log('[MessagesPage] messagesForCurrentConv:', messagesForCurrentConv)
-
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[MessagesPage] messagesForCurrentConv:', messagesForCurrentConv)
+  }
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: 'smooth' })
@@ -79,8 +84,9 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (convError && (convError.includes('token_not_valid') || convError === 'logout')) {
-      console.log('[MessagesPage] convError → редирект на /login')
-      router.push('/login')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[MessagesPage] convError → редирект на /login')
+      }      router.push('/login')
     }
   }, [convError, router])
   

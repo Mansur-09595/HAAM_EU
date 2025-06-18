@@ -25,6 +25,8 @@ export default function EditUserPage() {
   const user = useAppSelector(state => state.users.selected)
   const loading = useAppSelector(state => state.users.loading)
   const error = useAppSelector(state => state.users.error)
+  const currentUser = useAppSelector(state => state.auth.user)
+
 
   const { register, handleSubmit, reset } = useForm<FormValues>()
 
@@ -51,6 +53,7 @@ export default function EditUserPage() {
     router.push(`/users/${id}`)
   }
 
+  if (!currentUser?.is_staff) return <p>Access denied</p>
   if (loading) return <p>Загрузка…</p>
   if (error)   return <p className="text-red-500">Ошибка: {error}</p>
   if (!user)  return <p>Пользователь не найден.</p>

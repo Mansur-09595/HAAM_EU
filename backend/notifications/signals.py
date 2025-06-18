@@ -4,6 +4,9 @@ from django.contrib.auth import get_user_model
 from listings.models import Listing, Favorite
 from chat.models import Message
 from .models import Notification
+from .serializers import NotificationSerializer
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 User = get_user_model()
 
@@ -14,14 +17,23 @@ def create_message_notification(sender, instance, created, **kwargs):
         conversation = instance.conversation
         recipients = conversation.participants.exclude(id=instance.sender.id)
         
+        channel_layer = get_channel_layer()
         for recipient in recipients:
-            Notification.objects.create(
+            notification = Notification.objects.create(
                 recipient=recipient,
                 sender=instance.sender,
                 notification_type='message',
                 content=f'You received a new message from {instance.sender.username}',
                 object_id=conversation.id
             )
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f"notifications_{recipient.id}",
+                    {
+                        "type": "notification",
+                        "notification": NotificationSerializer(notification).data,
+                    },
+                )
 
 @receiver(post_save, sender=Favorite)
 def create_favorite_notification(sender, instance, created, **kwargs):

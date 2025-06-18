@@ -4,7 +4,7 @@ import { useEffect, Suspense } from 'react'
 import Link from "next/link"
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { fetchAds } from '@/store/slices/ads/adsAction'
-import { setSearchTerm, setMinPrice, setMaxPrice } from '@/store/slices/ads/adsSlice'
+import { setSearchTerm} from '@/store/slices/ads/adsSlice'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -99,7 +99,7 @@ export default function HomePage() {
 
 
         {/* 💰 Фильтры по цене */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        {/* <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Input
             type="number"
             placeholder="Цена от"
@@ -112,7 +112,7 @@ export default function HomePage() {
             onChange={(e) => dispatch(setMaxPrice(Number(e.target.value) || 10000))}
             className="w-full sm:w-1/4"
           />
-        </div>
+        </div> */}
 
       {/* 🆕 Новые объявления */}
         {loading && <p>Загрузка...</p>}

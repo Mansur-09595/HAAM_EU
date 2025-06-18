@@ -3,7 +3,7 @@ from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Subscription
-from .permissions import IsSelfOrAdmin
+from .permissions import IsSelfOrAdmin, IsSuperUser
 from .token import CustomTokenObtainPairSerializer
 from .serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer, SubscriptionSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -17,6 +17,10 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsSelfOrAdmin]
     
     def get_permissions(self):
+        if self.action == 'list':
+            return [permissions.IsAuthenticated(), IsSuperUser()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated(), permissions.IsAdminUser()]
         if self.action in ['create', 'token', 'token_refresh']:
             return [permissions.AllowAny()]
         return super().get_permissions()

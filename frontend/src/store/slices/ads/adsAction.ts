@@ -40,7 +40,9 @@ export const fetchAds = createAsyncThunk<
     if (minPrice !== undefined) params.set('price_min', String(minPrice))
     if (maxPrice !== undefined) params.set('price_max', String(maxPrice))
 
-    const res = await fetch(`${API_BASE}/listings/?${params.toString()}`)
+      const res = await TokenManager.fetchWithAuth(
+        `${API_BASE}/listings/?${params.toString()}`
+      )
      // Если ответ не OK, читаем текст (HTML или сообщение об ошибке)
      if (!res.ok) {
       const text = await res.text()
@@ -107,8 +109,8 @@ export const addAd = createAsyncThunk<
 
 // 🔍 Поиск объявления по ID
 export const fetchAdBySlug = createAsyncThunk("ads/fetchBySlug", async (slug: string) => {
-    const res = await fetch(`${API_BASE}/listings/${slug}/`)
-    if (res.status === 404) {
+  const res = await TokenManager.fetchWithAuth(`${API_BASE}/listings/${slug}/`)
+  if (res.status === 404){
       // можно вернуть null и отловить это на фронте
       return null
     }

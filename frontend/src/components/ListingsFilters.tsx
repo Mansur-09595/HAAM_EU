@@ -4,34 +4,14 @@ import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { fetchCategories } from '@/store/slices/categories/categoriesAction'
 import { fetchBelgianCities } from '@/store/slices/cities/citiesAction'
-import {
-  setSearchTerm,
-  setMinPrice,
-  setMaxPrice,
-  setCategory,
-  setCity,
-  clearFilters,
-  setPage,
-} from '@/store/slices/ads/adsSlice'
+import { setSearchTerm, setMinPrice, setMaxPrice, setCategory, setCity, clearFilters, setPage, } from '@/store/slices/ads/adsSlice'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent, } from '@/components/ui/accordion'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import {
-  Command,
-  CommandInput,
-  CommandEmpty,
-  CommandGroup,
-  CommandList,
-  CommandItem,
-} from '@/components/ui/command'
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandList, CommandItem, } from '@/components/ui/command'
 import { Check, ChevronDown } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { Category } from '@/types/IAds'
@@ -39,12 +19,7 @@ import type { Category } from '@/types/IAds'
 export default function ListingFilters() {
   const dispatch = useAppDispatch()
 
-  const {
-    searchTerm,
-    minPrice,
-    maxPrice,
-    category:  selectedCategory ,
-    city: selectedCity,
+  const { searchTerm, minPrice, maxPrice, category: selectedCategory, city: selectedCity,
   } = useAppSelector(state => state.ads)
 
   const { items: categories } = useAppSelector(state => state.categories)
@@ -67,10 +42,7 @@ export default function ListingFilters() {
         <AccordionItem value="search">
           <AccordionTrigger>Поиск</AccordionTrigger>
           <AccordionContent>
-            <Input
-              placeholder="По названию"
-              value={searchTerm}
-              onChange={e => {
+            <Input placeholder="По названию" value={searchTerm} onChange={e => {
                 dispatch(setSearchTerm(e.target.value))
               }}
             />
@@ -83,15 +55,8 @@ export default function ListingFilters() {
           <AccordionContent>
             <Popover open={openCat} onOpenChange={setOpenCat}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCat}
-                  className="w-full justify-between"
-                >
-                  {selectedCategory
-                    ? categories.find(c => c.slug === selectedCategory)?.name
-                    : 'Все категории'}
+                <Button variant="outline" role="combobox" aria-expanded={openCat} className="w-full justify-between">
+                    {selectedCategory ? categories.find(c => c.slug === selectedCategory)?.name : 'Все категории'}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -102,27 +67,13 @@ export default function ListingFilters() {
                   <CommandList>
                     <CommandGroup>
                       {categories.map((c: Category) => (
-                        <CommandItem
-                          key={c.id}
-                          value={c.slug}
-                          onSelect={val => {
-                            dispatch(
-                              setCategory(
-                                val === selectedCategory ? '' : val
-                              )
-                            )
+                        <CommandItem key={c.id} value={c.slug} onSelect={val => {
+                            dispatch(setCategory(val === selectedCategory ? '' : val))
                             dispatch(setPage(1))
                             setOpenCat(false)
-                          }}
-                        >
-                          <Check
-                            className={`mr-2 h-4 w-4 ${
-                              selectedCategory === c.slug
-                                ? 'opacity-100'
-                                : 'opacity-0'
-                            }`}
-                          />
-                          {c.name}
+                          }}>
+                          <Check className={`mr-2 h-4 w-4 ${selectedCategory === c.slug ? 'opacity-100' : 'opacity-0'}`}/>
+                            {c.name}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -141,33 +92,22 @@ export default function ListingFilters() {
               <div className="flex gap-4">
                 <div>
                   <Label htmlFor="min">От</Label>
-                  <Input
-                    id="min"
-                    type="number"
-                    value={minPrice}
-                    onChange={e => {
+                  <Input id="min" type="number" value={minPrice} onChange={e => {
                       dispatch(setMinPrice(Number(e.target.value) || 0))
                     }}
                   />
                 </div>
                 <div>
                   <Label htmlFor="max">До</Label>
-                  <Input
-                    id="max"
-                    type="number"
-                    value={maxPrice}
-                    onChange={e => {
+                  <Input id="max" type="number" value={maxPrice} onChange={e => {
                       dispatch(
-                        setMaxPrice(Number(e.target.value) || 1_000_000)
+                        setMaxPrice(Number(e.target.value) || 10000)
                       )
                     }}
                   />
                 </div>
               </div>
-              <Slider
-                value={[minPrice, maxPrice]}
-                max={1_000_000}
-                step={1_000}
+              <Slider value={[minPrice, maxPrice]} max={10000} step={1000}
                 onValueChange={([min, max]) => {
                   dispatch(setMinPrice(min))
                   dispatch(setMaxPrice(max))
@@ -183,13 +123,8 @@ export default function ListingFilters() {
           <AccordionContent>
             <Popover open={openCity} onOpenChange={setOpenCity}>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCity}
-                  className="w-full justify-between"
-                >
-                  {selectedCity || 'Все города'}
+                <Button variant="outline" role="combobox" aria-expanded={openCity} className="w-full justify-between">
+                    {selectedCity || 'Все города'}
                   <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -199,9 +134,7 @@ export default function ListingFilters() {
                   <CommandEmpty>Не найдено</CommandEmpty>
                   <CommandList>
                     <CommandGroup>
-                      <CommandItem
-                        value=""
-                        onSelect={() => {
+                      <CommandItem value="" onSelect={() => {
                           dispatch(setCity(''))
                           dispatch(setPage(1))
                           setOpenCity(false)
@@ -217,23 +150,13 @@ export default function ListingFilters() {
                             key={`${cityObj.name}-${cityObj.admin}-${i}`}
                             value={cityObj.name}
                             onSelect={val => {
-                              dispatch(
-                                setCity(
-                                  val === selectedCity ? '' : val
-                                )
-                              )
+                              dispatch(setCity(val === selectedCity ? '' : val))
                               dispatch(setPage(1))
                               setOpenCity(false)
                             }}
                           >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                selectedCity === cityObj.name
-                                  ? 'opacity-100'
-                                  : 'opacity-0'
-                              }`}
-                            />
-                            {cityObj.name} ({cityObj.admin})
+                            <Check className={`mr-2 h-4 w-4 ${ selectedCity === cityObj.name ? 'opacity-100' : 'opacity-0'}`}/>
+                              {cityObj.name} ({cityObj.admin})
                           </CommandItem>
                         ))
                       )}
@@ -264,20 +187,13 @@ export default function ListingFilters() {
       </Accordion>
 
       <div className="flex flex-col sm:flex-row gap-4">
-        <Button
-          className="flex-1"
-          onClick={() => dispatch(setPage(1))}
-        >
+        <Button className="flex-1" onClick={() => dispatch(setPage(1))}>
           Применить
         </Button>
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => {
+        <Button variant="outline" className="flex-1" onClick={() => {
             dispatch(clearFilters())
             dispatch(setPage(1))
-          }}
-        >
+          }}>
           Сбросить
         </Button>
       </div>

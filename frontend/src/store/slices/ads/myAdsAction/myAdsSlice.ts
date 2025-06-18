@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { fetchMyAds, deleteMyAd, toggleMyAdStatus, promoteMyAdToVip, editAd } from './myAdsAction' // Импортируем функции для работы с API
+import { fetchMyAds, deleteMyAd, toggleMyAdStatus, editAd } from './myAdsAction' // Импортируем функции для работы с API
 import { Ads } from '@/types/IAds' // Импортируем тип объявления
 
 // Состояние для объявлений
@@ -65,18 +65,18 @@ const myAdsSlice = createSlice({
         state.error = action.payload ?? action.error.message ?? null
       })
 
-    // ─── promoteMyAdToVip ───
-      .addCase(promoteMyAdToVip.pending, (state) => {
-        state.error = null
-      })
-      .addCase(promoteMyAdToVip.fulfilled, (state, action) => {
-        state.myItems = state.myItems.map((ad) =>
-          ad.slug === action.payload.slug ? action.payload : ad
-        )
-      })
-      .addCase(promoteMyAdToVip.rejected, (state, action) => {
-        state.error = action.payload ?? action.error.message ?? null
-      })
+    // // ─── promoteMyAdToVip ───
+    //   .addCase(promoteMyAdToVip.pending, (state) => {
+    //     state.error = null
+    //   })
+    //   .addCase(promoteMyAdToVip.fulfilled, (state, action) => {
+    //     state.myItems = state.myItems.map((ad) =>
+    //       ad.slug === action.payload.slug ? action.payload : ad
+    //     )
+    //   })
+    //   .addCase(promoteMyAdToVip.rejected, (state, action) => {
+    //     state.error = action.payload ?? action.error.message ?? null
+    //   })
       // ───►►► Новый Thunk: Редактирование объявления editAd ──────────────────
       .addCase(editAd.pending, (state) => {
         state.loading = true

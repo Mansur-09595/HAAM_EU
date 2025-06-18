@@ -47,9 +47,9 @@ export default function Header() {
                 <Link href="/ads" className={`text-lg ${pathname === "/ads" ? "font-bold" : ""}`}>
                   Объявления
                 </Link>
-                <Link href="/categories" className={`text-lg ${pathname === "/categories" ? "font-bold" : ""}`}>
+                {/* <Link href="/categories" className={`text-lg ${pathname === "/categories" ? "font-bold" : ""}`}>
                   Категории
-                </Link>
+                </Link> */}
                 {user ? (
                   <>
                     <Link href="/favorites" className={`text-lg ${pathname === "/favorites" ? "font-bold" : ""}`}>
@@ -86,10 +86,10 @@ export default function Header() {
               Объявления
             </Link>
             <Link
-              href="/categories"
-              className={`hover:text-blue-600 ${pathname === "/categories" ? "text-blue-600 font-medium" : ""}`}
+              href="/about"
+              className={`hover:text-blue-600 ${pathname === "/about" ? "text-blue-600 font-medium" : ""}`}
             >
-              Категории
+              Об сервисе
             </Link>
           </nav>
         </div>

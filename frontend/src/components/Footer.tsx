@@ -25,11 +25,11 @@ export default function Footer() {
           <div>
             <h3 className="font-bold text-lg mb-4">Поддержка</h3>
             <ul className="space-y-2 line-through text-gray-500">
-              <li>
+              {/* <li>
                 <Link href="/#" className="hover:underline">
                   Помощь<span className="text-red-500"> (в разработке)</span>
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/#" className="hover:underline">
                   Правила использования<span className="text-red-500"> (в разработке)</span>
@@ -45,7 +45,7 @@ export default function Footer() {
 
           <div>
             <h3 className="font-bold text-lg mb-4 line-through  text-gray-500">Мобильные приложения<span className="text-red-500"> (в разработке)</span></h3>
-            <div className="flex space-x-4 mb-4">
+            {/* <div className="flex space-x-4 mb-4">
               <Link href="#">
                 <img
                   src="/placeholder.svg?height=40&width=120"
@@ -60,7 +60,7 @@ export default function Footer() {
                   className="h-10 hover:opacity-80"
                 />
               </Link>
-            </div>
+            </div> */}
 
             <h3 className="font-bold text-lg mb-2 line-through  text-gray-500">Мы в соцсетях<span className="text-red-500"> (в разработке)</span></h3>
             <div className="flex space-x-4">

@@ -9,6 +9,7 @@ import {
   ArrowLeft, Heart, Share2, Flag, MapPin,
   Calendar, MessageSquare, Phone, Shield, Eye
 } from 'lucide-react'
+import GoogleMapEmbed from '@/components/GoogleMapEmbed'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -17,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-// import SimilarListings from '@/components/similar-listings'
+import { toggleFavorite } from '@/store/slices/favorites/favoritesAction'
 
 
 export default function ListingDetailPage() {
@@ -90,6 +91,10 @@ export default function ListingDetailPage() {
       // Здесь можно показать уведомление об ошибке
     }
   }
+  const isFavorite =
+          typeof listing.is_favorited === 'boolean'
+            ? listing.is_favorited
+            : listing.is_favorited === 'true'
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -115,7 +120,23 @@ export default function ListingDetailPage() {
             <div className="flex items-start justify-between">
               <h1 className="text-2xl md:text-3xl font-bold">{listing.title}</h1>
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon"><Heart className="h-5 w-5" /></Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      dispatch(
+                        toggleFavorite({
+                          slug: listing.slug,
+                          is_favorited: isFavorite,
+                        })
+                      )
+                    }
+                  >
+                    <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+                    <span className="sr-only">
+                      {isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                    </span>
+                  </Button>
                 <Button variant="ghost" size="icon"><Share2 className="h-5 w-5" /></Button>
                 <Button variant="ghost" size="icon"><Flag className="h-5 w-5" /></Button>
               </div>
@@ -172,9 +193,12 @@ export default function ListingDetailPage() {
           {/* Карта */}
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4">Местоположение</h2>
-            <div className="bg-muted rounded-lg h-[300px] flex items-center justify-center">
-              <MapPin className="h-8 w-8 text-muted-foreground" />
-              <span className="ml-2 text-muted-foreground">{listing.location}</span>
+            <div className="bg-muted rounded-lg h-[300px] overflow-hidden mb-2">
+              <GoogleMapEmbed address={listing.location} />
+            </div>
+            <div className="flex items-center text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span className="ml-1">{listing.location}</span>
             </div>
           </div>
 
@@ -225,7 +249,7 @@ export default function ListingDetailPage() {
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">{listing.view_count} просмотров</span>
               </div>
-              <div className="text-sm text-muted-foreground">ID: {listing.id}</div>
+              {/* <div className="text-sm text-muted-foreground">ID: {listing.id}</div> */}
             </CardContent>
           </Card>
         </div>

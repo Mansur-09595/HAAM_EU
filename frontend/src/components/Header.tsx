@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from 'react'
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Menu, Plus, Heart, MessageSquare, User, LogIn, LogOut } from "lucide-react"
@@ -16,6 +17,8 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { logout } from '@/store/slices/auth/authSlice'
+import { fetchNotifications } from '@/store/slices/notifications/notificationsAction'
+import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket'
 
 export default function Header() {
   const pathname = usePathname()
@@ -23,7 +26,20 @@ export default function Header() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector(state => state.auth)
 
-  // Селектор для подсчёта непрочитанных сообщений
+   // 1) Получаем userId
+   const userId: number | null = user?.id ?? null
+
+   // 2) Загружаем все уведомления один раз при авторизации
+   useEffect(() => {
+     if (userId) {
+       dispatch(fetchNotifications())
+     }
+   }, [dispatch, userId])
+ 
+   // 3) Подключаем WebSocket для real-time апдейтов
+   useNotificationWebSocket(userId)
+ 
+   // 4) Считаем количество непрочитанных уведомлений типа "message"
   const unreadMessagesCount = useAppSelector(
     state =>
       state.notifications.items.filter(
@@ -55,9 +71,6 @@ export default function Header() {
                 <Link href="/ads" className={`text-lg ${pathname === "/ads" ? "font-bold" : ""}`}>
                   Объявления
                 </Link>
-                {/* <Link href="/categories" className={`text-lg ${pathname === "/categories" ? "font-bold" : ""}`}>
-                  Категории
-                </Link> */}
                 {user ? (
                   <>
                     <Link href="/favorites" className={`text-lg ${pathname === "/favorites" ? "font-bold" : ""}`}>
@@ -165,22 +178,22 @@ export default function Header() {
                     </Link>
                   </DropdownMenuItem>
                   {/* Вот пункт «Сообщения» с бейджем */}
-        <DropdownMenuItem asChild>
-          <Link
-            href="/chat"
-            className="flex items-center justify-between w-full"
-          >
-            <div className="flex items-center">
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Сообщения
-            </div>
-            {unreadMessagesCount > 0 && (
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-semibold text-white">
-                {unreadMessagesCount}
-              </span>
-            )}
-          </Link>
-        </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/chat"
+                      className="flex items-center justify-between w-full"
+                    >
+                      <div className="flex items-center">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Сообщения
+                      </div>
+                      {unreadMessagesCount > 0 && (
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-semibold text-white">
+                          {unreadMessagesCount}
+                        </span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" /> Выйти

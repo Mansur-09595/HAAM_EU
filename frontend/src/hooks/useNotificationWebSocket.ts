@@ -31,6 +31,7 @@ export function useNotificationWebSocket(userId: number | null) {
     }
 
     ws.onclose = () => {
+      console.log('[WS] disconnected');
       wsRef.current = null
     }
 

@@ -6,6 +6,7 @@ import {
   sendMessage,
   createConversation,
   receiveMessage,
+  markConversationRead,
 } from "./chatActions";
 
 interface IMessagesState {
@@ -175,7 +176,20 @@ const chatSlice = createSlice({
       if (conv) {
         conv.last_message = message;
       }
-    });
+    }
+  )
+    builder.addCase(markConversationRead.fulfilled, (state, { payload }) => {
+      const conv = state.conversations.items.find(c => c.id === payload.conversationId)
+      if (conv) {
+        conv.unread_count = 0
+        if (conv.last_message) conv.last_message.is_read = true
+      }
+      // и в списке сообщений беседы
+      const msgsState = state.messagesByConversation[payload.conversationId]
+      if (msgsState) {
+        msgsState.messages = msgsState.messages.map(m => ({ ...m, is_read: true }))
+      }
+    })
   },
 });
 

@@ -292,3 +292,54 @@ export const sendMessage = createAsyncThunk<
 
 // 5) Обработка входящего WebSocket-сообщения
 export const receiveMessage = createAction<{ conversationId: number; message: IMessage }>('chat/receiveMessage')
+
+// 6) Отметить беседу как прочитанную — POST /conversations/{id}/mark_read/
+export const markConversationRead = createAsyncThunk<
+  { conversationId: number },
+  number,
+  { rejectValue: string; state: RootState }
+>(
+  'chat/markConversationRead',
+  async (conversationId, { rejectWithValue, dispatch, getState }) => {
+    const token = getState().auth.accessToken
+    if (!token) return rejectWithValue('Нет accessToken')
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE}/chat/conversations/${conversationId}/mark_read/`,
+      {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+      }
+    )
+
+    if (res.status === 401) {
+      // пробуем рефреш и повтор
+      const refresh = await dispatch(refreshToken()).unwrap().catch(() => {
+        dispatch(logout())
+        return null
+      })
+      if (!refresh) return rejectWithValue('logout')
+
+      const newToken = getState().auth.accessToken
+      const retry = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE}/chat/conversations/${conversationId}/mark_read/`,
+        {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${newToken}` 
+          },
+        }
+      )
+      if (!retry.ok) return rejectWithValue(`Ошибка ${retry.status}`)
+    } else if (!res.ok) {
+      return rejectWithValue(`Ошибка ${res.status}`)
+    }
+
+    return { conversationId }
+  }
+)
+

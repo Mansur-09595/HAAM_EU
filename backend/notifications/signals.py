@@ -22,7 +22,7 @@ def create_message_notification(sender, instance, created, **kwargs):
             notification = Notification.objects.create(
                 recipient=recipient,
                 sender=instance.sender,
-                notification_type='Новое сообщение',
+                notification_type='message',
                 content=f'Вы получили новое сообщения от {instance.sender.username}',
                 object_id=conversation.id
             )

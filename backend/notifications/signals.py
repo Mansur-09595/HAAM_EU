@@ -22,8 +22,8 @@ def create_message_notification(sender, instance, created, **kwargs):
             notification = Notification.objects.create(
                 recipient=recipient,
                 sender=instance.sender,
-                notification_type='message',
-                content=f'You received a new message from {instance.sender.username}',
+                notification_type='Новое сообщение',
+                content=f'Вы получили новое сообщения от {instance.sender.username}',
                 object_id=conversation.id
             )
             if channel_layer:

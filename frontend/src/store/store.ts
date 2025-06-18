@@ -11,7 +11,7 @@ import { rootReducer } from './rootReducer'
 const persistConfig = {
     key: 'root', // имя хранилища в localStorage
     storage, // используем localStorage
-    whitelist: ['favorites', 'ads', 'myads', 'myadsimg', 'auth', 'categories', 'adsByCategory', 'users', 'cities', 'chat' ], // Укажем, какие редьюсеры сохранять
+    whitelist: ['favorites', 'ads', 'myads', 'myadsimg', 'auth', 'categories', 'adsByCategory', 'users', 'cities', 'chat', 'notifications' ], // Укажем, какие редьюсеры сохранять
 }
 
 // Создаём редьюсер с возможностью сохранять данные

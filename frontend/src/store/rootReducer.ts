@@ -8,6 +8,7 @@ import citiesReducer from './slices/cities/citiesSlice'
 import myAdsReducer from './slices/ads/myAdsAction/myAdsSlice'
 import myAdsImgReducer from './slices/ads/myAdsImgAction/myAdsImgSlice'
 import chatReducer from './slices/chat/chatSlice'
+import notificationsReducer from './slices/notifications/notificationsSlice'
 
 export const rootReducer = {
   favorites: favoritesReducer,
@@ -20,4 +21,5 @@ export const rootReducer = {
   myads: myAdsReducer,
   myadsimg: myAdsImgReducer,
   chat: chatReducer,
+  notifications: notificationsReducer,
 }

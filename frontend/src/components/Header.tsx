@@ -23,6 +23,14 @@ export default function Header() {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector(state => state.auth)
 
+  // Селектор для подсчёта непрочитанных сообщений
+  const unreadMessagesCount = useAppSelector(
+    state =>
+      state.notifications.items.filter(
+        notification => notification.notification_type === 'message' && !notification.is_read
+      ).length
+  )
+
   const handleLogout = () => {
     dispatch(logout())
     router.push('/login')
@@ -111,9 +119,22 @@ export default function Header() {
                 </Link>
               </Button>
 
-              <Button asChild variant="ghost" size="icon" className="hidden md:flex">
+               {/* Сообщения с бейджем */}
+               <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="hidden md:flex relative"
+              >
                 <Link href="/chat">
                   <MessageSquare className="h-5 w-5" />
+                  {unreadMessagesCount > 0 && (
+                    <span 
+                      className="absolute top-0 right-0 flex h-4 w-4 -translate-y-1/2 translate-x-1/2 items-center 
+                      justify-center rounded-full bg-red-600 text-[10px] font-semibold text-white">
+                      {unreadMessagesCount}
+                    </span>
+                  )}
                   <span className="sr-only">Сообщения</span>
                 </Link>
               </Button>
@@ -143,12 +164,23 @@ export default function Header() {
                       Избранное
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/chat">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Сообщения
-                    </Link>
-                  </DropdownMenuItem>
+                  {/* Вот пункт «Сообщения» с бейджем */}
+        <DropdownMenuItem asChild>
+          <Link
+            href="/chat"
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center">
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Сообщения
+            </div>
+            {unreadMessagesCount > 0 && (
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-semibold text-white">
+                {unreadMessagesCount}
+              </span>
+            )}
+          </Link>
+        </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" /> Выйти

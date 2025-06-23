@@ -192,8 +192,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 
 
 # Celery
-CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_BROKER_URL    = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL'))
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL'))
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -204,18 +204,16 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     'delete-old-listings-every-day': {
         'task': 'listings.tasks.delete_old_listings',
-        'schedule': crontab(hour=3, minute=0),
+        'schedule': timedelta(days=1),
     },
 }
 
 # Channels (Redis-backed)
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [(os.getenv('REDIS_URL', 'redis://localhost:6379'))],
-        },
-    },
+  'default': {
+    'BACKEND': 'channels_redis.core.RedisChannelLayer',
+    'CONFIG': { 'hosts': [os.getenv('REDIS_URL')] },
+  },
 }
 
 
@@ -281,3 +279,23 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API for Avito Clone classified ads platform',
     'VERSION': '1.0.0',
 }
+
+# Сообщаем Django, что Render прокидывает оригинальный протокол
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+
+# Force HTTPS & secure cookies
+SECURE_SSL_REDIRECT   = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE    = True
+
+# Use WhiteNoise to serve compressed static files
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+if CELERY_BROKER_URL.startswith("rediss://") and "ssl_cert_reqs" not in CELERY_BROKER_URL:
+    sep = "&" if "?" in CELERY_BROKER_URL else "?"
+    CELERY_BROKER_URL += f"{sep}ssl_cert_reqs=CERT_NONE"
+
+if CELERY_RESULT_BACKEND.startswith("rediss://") and "ssl_cert_reqs" not in CELERY_RESULT_BACKEND:
+    sep = "&" if "?" in CELERY_RESULT_BACKEND else "?"
+    CELERY_RESULT_BACKEND += f"{sep}ssl_cert_reqs=CERT_NONE"

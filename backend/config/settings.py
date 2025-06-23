@@ -1,4 +1,5 @@
 import os
+import ssl
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -189,6 +190,15 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
 ]
+
+# SSL-опции для rediss://
+ssl_config = {
+    'ssl_cert_reqs': ssl.CERT_NONE,  # или ssl.CERT_OPTIONAL / ssl.CERT_REQUIRED
+}
+
+# Применяем к брокеру и бэкенду
+CELERY_BROKER_USE_SSL = ssl_config
+CELERY_RESULT_BACKEND_USE_SSL = ssl_config
 
 # Celery + Channels
 REDIS_URL = os.getenv('REDIS_URL')

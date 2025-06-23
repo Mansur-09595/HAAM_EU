@@ -28,6 +28,13 @@ RUN pip install --no-cache-dir -r /backend/requirements.txt
 #    образ, иначе приложение не найдёт модуль config и не запустится.
 COPY . /backend/
 
+# create a system user “celery” (no password, no home)
+RUN addgroup --system celery \
+ && adduser  --system --ingroup celery celery
+
+# from here on, we’re no longer root
+USER celery
+
 # 7) По умолчанию команда daphne (ASGI-сервер). 
 #    Но docker-compose её перекрывает vlastní командой.
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

@@ -197,8 +197,8 @@ ssl_config = {
 }
 
 # Применяем к брокеру и бэкенду
-CELERY_BROKER_USE_SSL = ssl_config
-CELERY_RESULT_BACKEND_USE_SSL = ssl_config
+CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+CELERY_RESULT_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 # Celery + Channels
 REDIS_URL = os.getenv('REDIS_URL')
@@ -228,8 +228,12 @@ CELERY_BEAT_SCHEDULE = {
 CHANNEL_LAYERS = {
   'default': {
     'BACKEND': 'channels_redis.core.RedisChannelLayer',
-    'CONFIG': { 'hosts': [os.getenv('REDIS_URL')] },
-  },
+    'CONFIG': { 
+        'hosts': [os.getenv('REDIS_URL')],
+               # Если у вас rediss://, то:
+                'ssl': {'cert_reqs': ssl.CERT_NONE}
+        },
+    },
 }
 
 

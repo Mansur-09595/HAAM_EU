@@ -38,7 +38,7 @@ services:
       python manage.py makemigrations &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
-      daphne -b 0.0.0.0 -p 8000 config.asgi:application
+      daphne -b 0.0.0.0 -p $PORT config.asgi:application
       "
     # ─── Монтируем локальный бэкенд внутрь контейнера ───
     volumes:

@@ -190,8 +190,8 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
 ]
 
-
-# Celery
+# Celery + Channels
+REDIS_URL = os.getenv('REDIS_URL')
 CELERY_BROKER_URL    = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL'))
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL'))
 CELERY_ACCEPT_CONTENT = ['json']
@@ -199,7 +199,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-from celery.schedules import crontab
+# для rediss:// чтобы Celery не падал без ssl_cert_reqs
+for var in ('CELERY_BROKER_URL','CELERY_RESULT_BACKEND'):
+    url = globals()[var]
+    if url.startswith('rediss://') and 'ssl_cert_reqs' not in url:
+        sep = '&' if '?' in url else '?'
+        globals()[var] = url + f"{sep}ssl_cert_reqs=CERT_NONE"
+
 
 CELERY_BEAT_SCHEDULE = {
     'delete-old-listings-every-day': {

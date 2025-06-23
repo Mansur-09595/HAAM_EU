@@ -200,22 +200,21 @@ ssl_config = {
 CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 CELERY_RESULT_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
-# Celery + Channels
-REDIS_URL = os.getenv('REDIS_URL')
-CELERY_BROKER_URL    = os.getenv('CELERY_BROKER_URL', os.getenv('REDIS_URL'))
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', os.getenv('REDIS_URL'))
+# Принудительное добавление ssl_cert_reqs в Redis URL
+def fix_redis_url(url):
+    if url.startswith('rediss://') and 'ssl_cert_reqs' not in url:
+        sep = '&' if '?' in url else '?'
+        return f"{url}{sep}ssl_cert_reqs=CERT_NONE"
+    return url
+
+REDIS_URL = fix_redis_url(os.getenv('REDIS_URL'))
+CELERY_BROKER_URL = fix_redis_url(os.getenv('CELERY_BROKER_URL', REDIS_URL + '/1'))
+CELERY_RESULT_BACKEND = fix_redis_url(os.getenv('CELERY_RESULT_BACKEND', REDIS_URL + '/2'))
+
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
-
-# для rediss:// чтобы Celery не падал без ssl_cert_reqs
-for var in ('CELERY_BROKER_URL','CELERY_RESULT_BACKEND'):
-    url = globals()[var]
-    if url.startswith('rediss://') and 'ssl_cert_reqs' not in url:
-        sep = '&' if '?' in url else '?'
-        globals()[var] = url + f"{sep}ssl_cert_reqs=CERT_NONE"
-
 
 CELERY_BEAT_SCHEDULE = {
     'delete-old-listings-every-day': {
@@ -224,14 +223,13 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Channels (Redis-backed)
+# Настройки Channel Layers
 CHANNEL_LAYERS = {
-  'default': {
-    'BACKEND': 'channels_redis.core.RedisChannelLayer',
-    'CONFIG': { 
-        'hosts': [os.getenv('REDIS_URL')],
-               # Если у вас rediss://, то:
-                'ssl': {'cert_reqs': ssl.CERT_NONE}
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+            'ssl': {'cert_reqs': ssl.CERT_NONE}
         },
     },
 }
@@ -312,10 +310,8 @@ CSRF_COOKIE_SECURE    = True
 # Use WhiteNoise to serve compressed static files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-if CELERY_BROKER_URL.startswith("rediss://") and "ssl_cert_reqs" not in CELERY_BROKER_URL:
-    sep = "&" if "?" in CELERY_BROKER_URL else "?"
-    CELERY_BROKER_URL += f"{sep}ssl_cert_reqs=CERT_NONE"
-
-if CELERY_RESULT_BACKEND.startswith("rediss://") and "ssl_cert_reqs" not in CELERY_RESULT_BACKEND:
-    sep = "&" if "?" in CELERY_RESULT_BACKEND else "?"
-    CELERY_RESULT_BACKEND += f"{sep}ssl_cert_reqs=CERT_NONE"
+# Принудительная обработка SSL для Redis
+if CELERY_BROKER_URL.startswith("rediss://"):
+    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+if CELERY_RESULT_BACKEND.startswith("rediss://"):
+    CELERY_RESULT_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}

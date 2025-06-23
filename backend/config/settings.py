@@ -91,8 +91,8 @@ DATABASES = {
 }
 
 import dj_database_url
-db_fronm_env = dj_database_url.config(conn_max_age=600)
-DATABASES['default'].update(db_fronm_env)
+database_url = os.getenv('DATABASE_URL')
+DATABASES['default'] = dj_database_url.parse(database_url)
 
 
 # Password validation

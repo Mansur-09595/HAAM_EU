@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-key-for-development')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'True'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'social_django',
     'drf_spectacular',
     'storages',
-    
+
     # Local apps
     'users.apps.UsersConfig',
     'listings.apps.ListingsConfig',
@@ -83,19 +83,18 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'avito_clone'),
-        'USER': os.getenv('DB_USER', 'postgres'),
+        'ENGINE':   'django.db.backends.postgresql',
+        'NAME':     os.getenv('DB_NAME', 'avito_clone'),
+        'USER':     os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'HOST':     os.getenv('DB_HOST', 'localhost'),
+        'PORT':     os.getenv('DB_PORT', '5432'),
     }
 }
 
 import dj_database_url
-database_url = os.getenv('DATABASE_URL')
-DATABASES['default'] = dj_database_url.parse(database_url)
-
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -111,20 +110,17 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
-    #os.path.join(BASE_DIR, 'static'),
+    # BASE_DIR / 'static',
 ]
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# User model
 AUTH_USER_MODEL = 'users.User'
 
 # REST Framework
@@ -140,43 +136,19 @@ REST_FRAMEWORK = {
 
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
-    "UPDATE_LAST_LOGIN": False,
-
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": "",
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "JSON_ENCODER": None,
-    "JWK_URL": None,
-    "LEEWAY": 0,
-
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
-    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-
-    "JTI_CLAIM": "jti",
-
-    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
-    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
-
-    "TOKEN_OBTAIN_SERIALIZER": "users.token.CustomTokenObtainPairSerializer",
-    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
-    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
-    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
-    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
-    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
+    "ACCESS_TOKEN_LIFETIME":       timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME":      timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS":       False,
+    "BLACKLIST_AFTER_ROTATION":    False,
+    "UPDATE_LAST_LOGIN":           False,
+    "ALGORITHM":                   "HS256",
+    "SIGNING_KEY":                 SECRET_KEY,
+    "AUTH_HEADER_TYPES":           ("Bearer",),
+    "AUTH_HEADER_NAME":            "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD":               "id",
+    "USER_ID_CLAIM":               "user_id",
+    "TOKEN_TYPE_CLAIM":            "token_type",
+    "TOKEN_OBTAIN_SERIALIZER":     "users.token.CustomTokenObtainPairSerializer",
 }
 
 # CORS settings
@@ -187,96 +159,91 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS',
     'https://haam-db.onrender.com,http://localhost:3000'
 ).split(',')
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "authorization",
-]
+CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 
-# SSL-опции для rediss://
-ssl_config = {
-    'ssl_cert_reqs': ssl.CERT_NONE,  # или ssl.CERT_OPTIONAL / ssl.CERT_REQUIRED
+#
+# === SSL / TLS for Redis over rediss:// ===
+#
+
+# Your base Redis URL (with TLS)
+REDIS_URL = os.getenv(
+    'REDIS_URL',
+    'rediss://red-d1a93mripnbc739t0dpg:zpHAYPQS6jcCcdPx9YKRhwnrnpWISYBr@frankfurt-keyvalue.render.com:6379'
+)
+
+# Celery broker & backend
+CELERY_BROKER_URL = REDIS_URL.replace('/0', '/1')
+CELERY_RESULT_BACKEND = REDIS_URL.replace('/0', '/2')
+
+# Use system CA bundle to trust Let's Encrypt
+COMMON_SSL = {
+    'ssl_cert_reqs': ssl.CERT_REQUIRED,
+    'ssl_ca_certs':   '/etc/ssl/certs/ca-certificates.crt',
 }
 
-# Применяем к брокеру и бэкенду
-CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
-CELERY_RESULT_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+CELERY_BROKER_USE_SSL = COMMON_SSL
+CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
 
-# Принудительное добавление ssl_cert_reqs в Redis URL
-def fix_redis_url(url):
-    if url.startswith('rediss://') and 'ssl_cert_reqs' not in url:
-        sep = '&' if '?' in url else '?'
-        return f"{url}{sep}ssl_cert_reqs=CERT_NONE"
-    return url
-
-REDIS_URL = fix_redis_url(os.getenv('REDIS_URL'))
-CELERY_BROKER_URL = fix_redis_url(os.getenv('CELERY_BROKER_URL', REDIS_URL + '/1'))
-CELERY_RESULT_BACKEND = fix_redis_url(os.getenv('CELERY_RESULT_BACKEND', REDIS_URL + '/2'))
-
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT    = ['json']
+CELERY_TASK_SERIALIZER   = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
+CELERY_TIMEZONE          = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
     'delete-old-listings-every-day': {
-        'task': 'listings.tasks.delete_old_listings',
+        'task':    'listings.tasks.delete_old_listings',
         'schedule': timedelta(days=1),
     },
 }
 
-# Настройки Channel Layers
+# Channels layer over Redis + TLS
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [REDIS_URL],
-            'ssl': {'cert_reqs': ssl.CERT_NONE}
+            'hosts': [
+                {
+                    'url': REDIS_URL,
+                    **COMMON_SSL
+                },
+            ],
         },
     },
 }
 
-
-# Настройки для логирования WebSocket соединений
+# Logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
+        'console': {'class': 'logging.StreamHandler'},
     },
     'loggers': {
-        'channels': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-        'channels_redis': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
+        'channels':        {'handlers': ['console'], 'level': 'DEBUG'},
+        'channels_redis':  {'handlers': ['console'], 'level': 'DEBUG'},
     },
 }
 
-
 # Email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT          = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@avitoclone.com')
+EMAIL_USE_TLS       = True
+DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@avitoclone.com')
 
-# Social Authentication
+# Social Auth
 AUTHENTICATION_BACKENDS = (
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.vk.VKOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY    = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY', '')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET', '')
 
-SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY', '')
+SOCIAL_AUTH_VK_OAUTH2_KEY    = os.getenv('SOCIAL_AUTH_VK_OAUTH2_KEY', '')
 SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('SOCIAL_AUTH_VK_OAUTH2_SECRET', '')
 
 SOCIAL_AUTH_PIPELINE = (
@@ -293,25 +260,18 @@ SOCIAL_AUTH_PIPELINE = (
 
 # API docs
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Avito Clone API',
+    'TITLE':       'Avito Clone API',
     'DESCRIPTION': 'API for Avito Clone classified ads platform',
-    'VERSION': '1.0.0',
+    'VERSION':     '1.0.0',
 }
 
-# Сообщаем Django, что Render прокидывает оригинальный протокол
+# Render proxy header
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-
-# Force HTTPS & secure cookies
+# Security
 SECURE_SSL_REDIRECT   = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE    = True
 
-# Use WhiteNoise to serve compressed static files
+# Staticfiles via WhiteNoise
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-# Принудительная обработка SSL для Redis
-if CELERY_BROKER_URL.startswith("rediss://"):
-    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
-if CELERY_RESULT_BACKEND.startswith("rediss://"):
-    CELERY_RESULT_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}

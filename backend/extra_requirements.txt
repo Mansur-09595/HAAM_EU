@@ -1,0 +1,3 @@
+psycopg2==2.9.10
+dj-database-url==3.0.0
+whitenoise==6.9.0

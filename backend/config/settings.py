@@ -165,15 +165,10 @@ CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 # === SSL / TLS for Redis over rediss:// ===
 #
 
-# Your base Redis URL (with TLS)
-REDIS_URL = os.getenv(
-    'REDIS_URL',
-    'rediss://red-d1a93mripnbc739t0dpg:zpHAYPQS6jcCcdPx9YKRhwnrnpWISYBr@frankfurt-keyvalue.render.com:6379'
-)
-
-# Celery broker & backend
-CELERY_BROKER_URL = REDIS_URL.replace('/0', '/1')
-CELERY_RESULT_BACKEND = REDIS_URL.replace('/0', '/2')
+# === Redis / Celery TLS ===
+REDIS_URL = os.getenv('REDIS_URL')
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f"{REDIS_URL}/1")
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f"{REDIS_URL}/2")
 
 # Use system CA bundle to trust Let's Encrypt
 COMMON_SSL = {
@@ -203,8 +198,9 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             'hosts': [
                 {
-                    'url': REDIS_URL,
-                    **COMMON_SSL
+                    'url':        REDIS_URL,
+                    'ssl_cert_reqs': COMMON_SSL['ssl_cert_reqs'],
+                    'ssl_ca_certs':  COMMON_SSL['ssl_ca_certs'],
                 },
             ],
         },

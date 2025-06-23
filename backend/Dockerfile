@@ -23,8 +23,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt /backend/
 RUN pip install --no-cache-dir -r /backend/requirements.txt
 
-# 6) Больше НЕ копируем весь проект — код монтируется из локальной папки через docker-compose
-#    Поэтому строчку «COPY . /backend/» УДАЛЯЕМ или комментируем.
+# 6) Копируем исходный код приложения. В локальной разработке он монтируется
+#    через docker-compose, но в окружениях вроде Render его нужно включить в
+#    образ, иначе приложение не найдёт модуль config и не запустится.
+COPY . /backend/
 
 # 7) По умолчанию команда daphne (ASGI-сервер). 
 #    Но docker-compose её перекрывает vlastní командой.

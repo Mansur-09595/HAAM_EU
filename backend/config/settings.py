@@ -316,4 +316,4 @@ else:
     CSRF_COOKIE_SECURE    = False
 
 # Staticfiles via WhiteNoise
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+#STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

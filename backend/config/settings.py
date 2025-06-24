@@ -9,6 +9,7 @@ if os.getenv("DJANGO_ENV") != "production":
     from dotenv import load_dotenv
     load_dotenv()
 
+# Check if the environment is production
 IS_PRODUCTION = os.getenv("DJANGO_ENV") == "production"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.

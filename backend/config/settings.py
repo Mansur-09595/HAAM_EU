@@ -1,4 +1,4 @@
-import os, ssl, certifi, dj_database_url
+import os, ssl, certifi
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
@@ -98,11 +98,9 @@ DATABASES = {
     }
 }
 
-# Если в продакшн и есть полноценный DATABASE_URL — подменяем
-if IS_PRODUCTION and os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.parse(
-        os.getenv('DATABASE_URL'),
-    )
+import dj_database_url
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

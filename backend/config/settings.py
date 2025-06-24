@@ -199,17 +199,12 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [
-                (
-                    REDIS_URL,  # "rediss://:password@host:6379/0"
-                    {
-                        "ssl_cert_reqs": ssl.CERT_REQUIRED,
-                        "ssl_ca_certs": certifi.where(),
-                    },
-                ),
+                REDIS_URL,  # e.g. "rediss://:пароль@frankfurt-keyvalue.render.com:6379/0"
             ],
         },
     },
 }
+
 
 # Logging
 LOGGING = {

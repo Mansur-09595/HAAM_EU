@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - .env.local
+      #- .env.local
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -59,7 +59,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - .env.local
+      #- .env.local
     environment:
       # обязательно указываем, где найти настройки
       - DJANGO_SETTINGS_MODULE=config.settings
@@ -85,7 +85,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - .env.local
+      #- .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       # Убедитесь, что эта переменная берётся из .env:
@@ -106,7 +106,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      - .env.local
+      #- .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}

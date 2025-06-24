@@ -193,23 +193,23 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Channels layer over Redis + TLS
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
                 (
-                    REDIS_URL,
+                    REDIS_URL,  # "rediss://:password@host:6379/0"
                     {
-                        'ssl_cert_reqs': COMMON_SSL['ssl_cert_reqs'],
-                        'ssl_ca_certs':  COMMON_SSL['ssl_ca_certs'],
-                    }
+                        "ssl_cert_reqs": ssl.CERT_REQUIRED,
+                        "ssl_ca_certs": certifi.where(),
+                    },
                 ),
             ],
         },
     },
 }
-
 
 # Logging
 LOGGING = {

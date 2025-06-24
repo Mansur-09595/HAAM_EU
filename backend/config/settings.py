@@ -198,15 +198,18 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [
-                {
-                    'url':        REDIS_URL,
-                    'ssl_cert_reqs': COMMON_SSL['ssl_cert_reqs'],
-                    'ssl_ca_certs':  COMMON_SSL['ssl_ca_certs'],
-                },
+                (
+                    REDIS_URL,
+                    {
+                        'ssl_cert_reqs': COMMON_SSL['ssl_cert_reqs'],
+                        'ssl_ca_certs':  COMMON_SSL['ssl_ca_certs'],
+                    }
+                ),
             ],
         },
     },
 }
+
 
 # Logging
 LOGGING = {

@@ -199,13 +199,19 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [
-                REDIS_URL,  # e.g. "rediss://:пароль@frankfurt-keyvalue.render.com:6379/0"
+                (
+                    REDIS_URL,
+                    {
+                        # Попробуйте передавать вот так:
+                        "ssl_ca_certs": certifi.where(),
+                        # без явного ssl_cert_reqs — пусть клиент сам 
+                        # выставит CERT_REQUIRED по умолчанию
+                    },
+                ),
             ],
         },
     },
 }
-
-
 # Logging
 LOGGING = {
     'version': 1,

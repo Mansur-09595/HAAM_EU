@@ -193,25 +193,15 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 # Channels layer over Redis + TLS
-
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [
-                (
-                    REDIS_URL,
-                    {
-                        # Попробуйте передавать вот так:
-                        "ssl_ca_certs": certifi.where(),
-                        # без явного ssl_cert_reqs — пусть клиент сам 
-                        # выставит CERT_REQUIRED по умолчанию
-                    },
-                ),
-            ],
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
         },
     },
 }
+
 # Logging
 LOGGING = {
     'version': 1,

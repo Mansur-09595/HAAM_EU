@@ -86,22 +86,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
-# Database
-if IS_PRODUCTION and os.getenv("DATABASE_URL"):
-    DATABASES = {
-        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
+# Базовая секция DATABASES
+DATABASES = {
+    'default': {
+        'ENGINE':   'django.db.backends.postgresql',
+        'NAME':     os.getenv('DB_NAME', 'avito_clone'),
+        'USER':     os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST':     os.getenv('DB_HOST', 'localhost'),
+        'PORT':     os.getenv('DB_PORT', '5432'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE':   'django.db.backends.postgresql',
-            'NAME':     os.getenv('DB_NAME', 'avito_clone'),
-            'USER':     os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-            'HOST':     os.getenv('DB_HOST', 'localhost'),
-            'PORT':     os.getenv('DB_PORT', '5432'),
-        }
-    }
+}
+
+# Если в продакшн и есть полноценный DATABASE_URL — подменяем
+if IS_PRODUCTION and os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.parse(
+        os.getenv('DATABASE_URL'),
+    )
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

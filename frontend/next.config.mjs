@@ -21,13 +21,12 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['localhost'],
+    domains: ['haam-db.onrender.com'],
   },
   remotePatterns: [
     {
-      protocol: 'http',
-      hostname: 'localhost',
-      port: '8000',
+      protocol: 'https',
+      hostname: 'haam-db.onrender.com',
       pathname: '/media/**',
     },
   ],
@@ -35,7 +34,7 @@ const nextConfig = {
     return [
       {
         source: '/media/:path*',
-        destination: 'http://localhost:8000/media/:path*',
+        destination: 'https://haam-db.onrender.com/media/:path*',
       },
     ]
   },

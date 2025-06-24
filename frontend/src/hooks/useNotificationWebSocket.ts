@@ -1,47 +1,34 @@
 import { useEffect, useRef } from 'react'
-import { useToast } from '@/hooks/use-toast'
 
 export function useNotificationWebSocket(userId: number | null) {
   const wsRef = useRef<WebSocket | null>(null)
-  const { toast } = useToast()
 
   useEffect(() => {
     if (!userId) {
-      if (wsRef.current) {
-        wsRef.current.close()
-        wsRef.current = null
-      }
+      wsRef.current?.close()
+      wsRef.current = null
       return
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const token = localStorage.getItem('accessToken') || ''
-    const ws = new WebSocket(`${protocol}://localhost:8000/ws/notifications/${userId}/?token=${token}`)
+    const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'haam-db.onrender.com'
+    const token = localStorage.getItem('accessToken') ?? ''
+    const url = `wss://${host}/ws/notifications/${userId}/?token=${token}`
+    console.log('[WebSocket] connecting to', url)
+
+    const ws = new WebSocket(url)
     wsRef.current = ws
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        if (data.notification_type === 'message') {
-          toast({ title: 'Новое сообщение', description: data.content })
-        }
-      } catch (err) {
-        console.error('Notification WS error', err)
-      }
-    }
-
-    ws.onclose = () => {
-      console.log('[WS] disconnected');
-      wsRef.current = null
-    }
+    ws.onopen = () => console.log('[WebSocket] notifications connected')
+    ws.onmessage = (e) => console.log('[WebSocket] notifications message', e.data)
+    ws.onerror = (ev) => console.error('[WebSocket] notifications onerror', ev)
+    ws.onclose = (e) =>
+      console.warn('[WebSocket] notifications onclose', e.code, e.reason, e.wasClean)
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close()
-        wsRef.current = null
-      }
+      ws.close()
+      wsRef.current = null
     }
-  }, [userId, toast])
+  }, [userId])
 
   return wsRef
 }

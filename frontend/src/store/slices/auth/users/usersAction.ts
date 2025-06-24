@@ -4,10 +4,11 @@ import type { Users } from '@/types/IUsers'
 import { TokenManager } from '@/utils/tokenUtils'
 import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
 
 // Ваш «первичный» токен из бэка
-const DEMO_ACCESS_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NjU1NTY4LCJpYXQiOjE3NDY2NTUyNjgsImp0aSI6IjU5Zjc0NDRkNWZiNDQ1MGY4MjZjYmFmOGRlMGM1MjlkIiwidXNlcl9pZCI6OX0.D-o9LDagn45jKUStYtEx_uSpgUBEsg8goJxOAEBIHp8'
+const DEMO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzI0MTE4LCJpYXQiOjE3NTA3MjM4MTgsImp0aSI6IjJhMDMzNTI1NjU5ZTRmMGRiMTE3M2I5YTNhMTgwODMwIiwidXNlcl9pZCI6M30.mDLtM8b2KWCaHREHlcbEcvCpPVCn4vKikrG92d2_H4U"
+
 
 // Хелпер для заголовка авторизации: сначала из localStorage, иначе DEMO_ACCESS_TOKEN
 const getAuthHeader = () => {

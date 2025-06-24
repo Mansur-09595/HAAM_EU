@@ -2,7 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit'
 import { TokenManager } from '@/utils/tokenUtils'
 import { INotification } from '@/types/notificationTypes'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
 
 export const fetchNotifications = createAsyncThunk<
   INotification[],

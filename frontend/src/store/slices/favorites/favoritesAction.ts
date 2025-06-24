@@ -3,7 +3,7 @@ import { Ads } from '@/types/IAds'
 import { TokenManager } from '@/utils/tokenUtils'
 import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
 
 // ⭐ Избранное объявления (получение списка избранных объявлений)
 export const fetchFavorites = createAsyncThunk<

@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { TokenManager } from "@/utils/tokenUtils";
 import { AuthErrorHandler } from "@/utils/authErrorHandler";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api"; 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://haam-db.onrender.com/api"; 
 
 export const addListingImage = createAsyncThunk<
   { id: number; image: string; is_primary: boolean; created_at: string },

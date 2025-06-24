@@ -8,7 +8,7 @@ import { logout } from '@/store/slices/auth/authSlice'
 import { TokenManager } from '@/utils/tokenUtils'
 import { IConversation, IMessage, ICreateConversationPayload, ISendMessagePayload, ISendMessageResponse, IPaginatedConversations } from '@/types/chatTypes'
 
-const API_BASE = 'http://localhost:8000/api/chat'
+const API_BASE = 'https://haam-db.onrender.com/api/chat'
 
 
 // Вспомогательная функция: берёт актуальный accessToken из стейта
@@ -305,7 +305,7 @@ export const markConversationRead = createAsyncThunk<
     if (!token) return rejectWithValue('Нет accessToken')
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE}/chat/conversations/${conversationId}/mark_read/`,
+      `${API_BASE}/conversations/${conversationId}/mark_read/`,
       {
         method: 'POST',
         headers: { 
@@ -325,7 +325,7 @@ export const markConversationRead = createAsyncThunk<
 
       const newToken = getState().auth.accessToken
       const retry = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE}/chat/conversations/${conversationId}/mark_read/`,
+        `${process.env.API_BASE}/chat/conversations/${conversationId}/mark_read/`,
         {
           method: 'POST',
           headers: { 

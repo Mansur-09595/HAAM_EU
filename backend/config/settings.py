@@ -4,7 +4,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
-load_dotenv()
+# Только локально загружаем .env
+if os.getenv("DJANGO_ENV") != "production":
+    from dotenv import load_dotenv
+    load_dotenv()
 
 IS_PRODUCTION = os.getenv("DJANGO_ENV") == "production"
 
@@ -133,8 +136,8 @@ else:
 
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
-MEDIA_URL = '/mediafiles/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+MEDIA_URL =  f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

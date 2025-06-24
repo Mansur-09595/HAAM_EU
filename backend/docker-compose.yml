@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+      - .env.local
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -33,18 +34,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: >
-      sh -c "
-      python manage.py makemigrations &&
-      python manage.py migrate &&
-      python manage.py collectstatic --noinput &&
-      daphne -b 0.0.0.0 -p $PORT config.asgi:application
-      "
+    #command: >
+      # sh -c "
+      # python manage.py makemigrations &&
+      # python manage.py migrate &&
+      # python manage.py collectstatic --noinput &&
+      # daphne -b 0.0.0.0 -p $PORT config.asgi:application
+      # "
     # ─── Монтируем локальный бэкенд внутрь контейнера ───
+    command: >
+      daphne
+      --bind 0.0.0.0
+      --port 8000
+      config.asgi:application
     volumes:
       - .:/backend
       - static_volume:/backend/staticfiles
-      - media_volume:/backend/media
+      - media_volume:/backend/mediafiles
     ports:
       - "8000:8000"
     depends_on:
@@ -53,11 +59,16 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+      - .env.local
     environment:
       # обязательно указываем, где найти настройки
       - DJANGO_SETTINGS_MODULE=config.settings
       # Celery–переменная (если вы хотите, можно добавить REDIS_URL сюда)
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - USE_S3=TRUE
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
 
   # 4) Celery Worker
   celery:
@@ -74,6 +85,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+      - .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       # Убедитесь, что эта переменная берётся из .env:
@@ -94,6 +106,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+      - .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}

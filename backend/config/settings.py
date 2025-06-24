@@ -1,12 +1,12 @@
-import os
-import ssl
+import os, ssl, certifi, dj_database_url
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
-import certifi
 
 load_dotenv()
+
+IS_PRODUCTION = os.getenv("DJANGO_ENV") == "production"
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,6 +16,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-key-for-development')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+USE_S3 = os.getenv('USE_S3') == 'TRUE'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
@@ -82,20 +83,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE':   'django.db.backends.postgresql',
-        'NAME':     os.getenv('DB_NAME', 'avito_clone'),
-        'USER':     os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST':     os.getenv('DB_HOST', 'localhost'),
-        'PORT':     os.getenv('DB_PORT', '5432'),
+if IS_PRODUCTION and os.getenv("DATABASE_URL"):
+    DATABASES = {
+        'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
     }
-}
-
-import dj_database_url
-if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE':   'django.db.backends.postgresql',
+            'NAME':     os.getenv('DB_NAME', 'avito_clone'),
+            'USER':     os.getenv('DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+            'HOST':     os.getenv('DB_HOST', 'localhost'),
+            'PORT':     os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -111,16 +113,30 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    # BASE_DIR / 'static',
-]
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Static files (CSS, JavaScript, Images)
+if USE_S3:
+    # aws settings
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+    # s3 static settings
+    AWS_LOCATION = 'static'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+else:
+    STATIC_URL = '/staticfiles/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+MEDIA_URL = '/mediafiles/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
+
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
@@ -149,7 +165,24 @@ SIMPLE_JWT = {
     "USER_ID_FIELD":               "id",
     "USER_ID_CLAIM":               "user_id",
     "TOKEN_TYPE_CLAIM":            "token_type",
-    "TOKEN_OBTAIN_SERIALIZER":     "users.token.CustomTokenObtainPairSerializer",
+    "AUDIENCE": None,
+    "ISSUER": None,
+    "JSON_ENCODER": None,
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=60),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
+    "TOKEN_OBTAIN_SERIALIZER": "users.token.CustomTokenObtainPairSerializer",
+    "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+    "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
+    "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
+    "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
 # CORS settings
@@ -167,18 +200,27 @@ CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 #
 
 # === Redis / Celery TLS ===
-REDIS_URL = os.getenv('REDIS_URL')
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f"{REDIS_URL}/1")
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f"{REDIS_URL}/2")
+if IS_PRODUCTION:
+    REDIS_URL = os.getenv('REDIS_URL')
+else:
+    REDIS_URL = 'redis://localhost:6379'
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = os.getenv("REDIS_PORT", "6379")
 
-# Use system CA bundle to trust Let's Encrypt
-COMMON_SSL = {
-    'ssl_cert_reqs': ssl.CERT_REQUIRED,
-    'ssl_ca_certs':   certifi.where(),
-}
+CELERY_BROKER_URL = f"{REDIS_URL}/1"
+CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
 
-CELERY_BROKER_USE_SSL = COMMON_SSL
-CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
+# TLS только в продакшене
+if IS_PRODUCTION:
+    COMMON_SSL = {
+        'ssl_cert_reqs': ssl.CERT_REQUIRED,
+        'ssl_ca_certs': certifi.where(),
+    }
+    CELERY_BROKER_USE_SSL = COMMON_SSL
+    CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
+else:
+    CELERY_BROKER_USE_SSL = None
+    CELERY_RESULT_BACKEND_USE_SSL = None
 
 CELERY_ACCEPT_CONTENT    = ['json']
 CELERY_TASK_SERIALIZER   = 'json'
@@ -216,13 +258,17 @@ LOGGING = {
 }
 
 # Email
-EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST          = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT          = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS       = True
-DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@avitoclone.com')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+if IS_PRODUCTION:
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+else:
+    # для локалки можно так:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Social Auth
 AUTHENTICATION_BACKENDS = (
@@ -260,9 +306,14 @@ SPECTACULAR_SETTINGS = {
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Security
-SECURE_SSL_REDIRECT   = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE    = True
+if IS_PRODUCTION:
+    SECURE_SSL_REDIRECT   = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE    = True
+else:
+    SECURE_SSL_REDIRECT   = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE    = False
 
 # Staticfiles via WhiteNoise
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

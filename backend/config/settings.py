@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
+import certifi
 
 load_dotenv()
 
@@ -173,7 +174,7 @@ CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f"{REDIS_URL}/2")
 # Use system CA bundle to trust Let's Encrypt
 COMMON_SSL = {
     'ssl_cert_reqs': ssl.CERT_REQUIRED,
-    'ssl_ca_certs':   '/etc/ssl/certs/ca-certificates.crt',
+    'ssl_ca_certs':   certifi.where(),
 }
 
 CELERY_BROKER_USE_SSL = COMMON_SSL

@@ -7,3 +7,8 @@ env
 /.devcontainer/
 /env/
 /.env/
+cel_tests.py
+.cel_tests.py
+/cel_tests.py
+/cel_tests.py/
+cel_tests.py/

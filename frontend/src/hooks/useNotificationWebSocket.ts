@@ -1,34 +1,47 @@
 import { useEffect, useRef } from 'react'
+import { useToast } from '@/hooks/use-toast'
 
 export function useNotificationWebSocket(userId: number | null) {
   const wsRef = useRef<WebSocket | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (!userId) {
-      wsRef.current?.close()
-      wsRef.current = null
+      if (wsRef.current) {
+        wsRef.current.close()
+        wsRef.current = null
+      }
       return
     }
 
     const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'haam-db.onrender.com'
     const token = localStorage.getItem('accessToken') ?? ''
-    const url = `wss://${host}/ws/notifications/${userId}/?token=${token}`
-    console.log('[WebSocket] connecting to', url)
-
-    const ws = new WebSocket(url)
+    const ws = new WebSocket(`wss://${host}/ws/notifications/${userId}/?token=${token}`)
     wsRef.current = ws
 
-    ws.onopen = () => console.log('[WebSocket] notifications connected')
-    ws.onmessage = (e) => console.log('[WebSocket] notifications message', e.data)
-    ws.onerror = (ev) => console.error('[WebSocket] notifications onerror', ev)
-    ws.onclose = (e) =>
-      console.warn('[WebSocket] notifications onclose', e.code, e.reason, e.wasClean)
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.notification_type === 'message') {
+          toast({ title: 'Новое сообщение', description: data.content })
+        }
+      } catch (err) {
+        console.error('Notification WS error', err)
+      }
+    }
 
-    return () => {
-      ws.close()
+    ws.onclose = () => {
+      console.log('[WS] disconnected');
       wsRef.current = null
     }
-  }, [userId])
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close()
+        wsRef.current = null
+      }
+    }
+  }, [userId, toast])
 
   return wsRef
 }

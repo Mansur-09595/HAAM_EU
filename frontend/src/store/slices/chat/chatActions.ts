@@ -305,7 +305,7 @@ export const markConversationRead = createAsyncThunk<
     if (!token) return rejectWithValue('Нет accessToken')
 
     const res = await fetch(
-      `${API_BASE}/conversations/${conversationId}/mark_read/`,
+      `https://haam-db.onrender.com/api/notifications/${conversationId}/mark_read/`,
       {
         method: 'POST',
         headers: { 
@@ -325,7 +325,7 @@ export const markConversationRead = createAsyncThunk<
 
       const newToken = getState().auth.accessToken
       const retry = await fetch(
-        `${process.env.API_BASE}/chat/conversations/${conversationId}/mark_read/`,
+        `https://haam-db.onrender.com/api/notifications/${conversationId}/mark_read/`,
         {
           method: 'POST',
           headers: { 

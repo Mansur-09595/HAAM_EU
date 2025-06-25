@@ -127,14 +127,6 @@ if USE_S3:
     STATIC_ROOT = BASE_DIR / "staticfiles"
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
-    STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
 
     # Медиаконтент в S3
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"

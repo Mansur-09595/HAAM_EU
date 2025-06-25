@@ -4,13 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
-# Только локально загружаем .env
-if os.getenv("DJANGO_ENV") != "production":
-    from dotenv import load_dotenv
-    load_dotenv()
-
-# Check if the environment is production
-IS_PRODUCTION = os.getenv("DJANGO_ENV") == "production"
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -124,7 +118,7 @@ if USE_S3:
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
-    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")  # ваш регион
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")  # ваш регион
     AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
     AWS_DEFAULT_ACL = "public-read"
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
@@ -206,27 +200,18 @@ CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
 #
 
 # === Redis / Celery TLS ===
-if IS_PRODUCTION:
-    REDIS_URL = os.getenv('REDIS_URL')
-else:
-    REDIS_URL = 'redis://localhost:6379'
-    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-    REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_URL = os.getenv('REDIS_URL')
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', f"{REDIS_URL}/1")
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f"{REDIS_URL}/2")
 
-CELERY_BROKER_URL = f"{REDIS_URL}/1"
-CELERY_RESULT_BACKEND = f"{REDIS_URL}/2"
+# Use system CA bundle to trust Let's Encrypt
+COMMON_SSL = {
+    'ssl_cert_reqs': ssl.CERT_REQUIRED,
+    'ssl_ca_certs':   certifi.where(),
+}
 
-# TLS только в продакшене
-if IS_PRODUCTION:
-    COMMON_SSL = {
-        'ssl_cert_reqs': ssl.CERT_REQUIRED,
-        'ssl_ca_certs': certifi.where(),
-    }
-    CELERY_BROKER_USE_SSL = COMMON_SSL
-    CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
-else:
-    CELERY_BROKER_USE_SSL = None
-    CELERY_RESULT_BACKEND_USE_SSL = None
+CELERY_BROKER_USE_SSL = COMMON_SSL
+CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
 
 CELERY_ACCEPT_CONTENT    = ['json']
 CELERY_TASK_SERIALIZER   = 'json'
@@ -264,17 +249,13 @@ LOGGING = {
 }
 
 # Email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
-if IS_PRODUCTION:
-    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-else:
-    # для локалки можно так:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND       = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST          = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT          = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS       = True
+DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@avitoclone.com')
 
 # Social Auth
 AUTHENTICATION_BACKENDS = (
@@ -312,14 +293,9 @@ SPECTACULAR_SETTINGS = {
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Security
-if IS_PRODUCTION:
-    SECURE_SSL_REDIRECT   = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE    = True
-else:
-    SECURE_SSL_REDIRECT   = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE    = False
+SECURE_SSL_REDIRECT   = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE    = True
 
 # Staticfiles via WhiteNoise
 #STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

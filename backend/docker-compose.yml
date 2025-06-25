@@ -10,7 +10,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      #- .env.local
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -41,12 +40,6 @@ services:
       python manage.py collectstatic --noinput &&
       daphne -b 0.0.0.0 -p $PORT config.asgi:application
       "
-    #─── Монтируем локальный бэкенд внутрь контейнера ───
-    # command: >
-    #   daphne
-    #   --bind 0.0.0.0
-    #   --port 8000
-    #   config.asgi:application
     volumes:
       - .:/backend
       - static_volume:/backend/staticfiles
@@ -59,7 +52,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      #- .env.local
     environment:
       # обязательно указываем, где найти настройки
       - DJANGO_SETTINGS_MODULE=config.settings
@@ -81,7 +73,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      #- .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       # Убедитесь, что эта переменная берётся из .env:
@@ -102,7 +93,6 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-      #- .env.local
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}

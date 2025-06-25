@@ -42,8 +42,8 @@ services:
       "
     volumes:
       - .:/backend
-      - static_volume:/backend/staticfiles
-      - media_volume:/backend/mediafiles
+      # - static_volume:/backend/staticfiles
+      # - media_volume:/backend/mediafiles
     ports:
       - "8000:8000"
     depends_on:
@@ -53,9 +53,11 @@ services:
     env_file:
       - .env
     environment:
-      # обязательно указываем, где найти настройки
       - DJANGO_SETTINGS_MODULE=config.settings
-      # Celery–переменная (если вы хотите, можно добавить REDIS_URL сюда)
+      - USE_S3=TRUE
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
 
   # 4) Celery Worker

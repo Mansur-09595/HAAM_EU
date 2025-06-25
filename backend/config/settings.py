@@ -125,7 +125,7 @@ if USE_S3:
     # Статика всё ещё можно отдавать белайтноизом
     STATIC_LOCATION = "staticfiles"
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/staticfiles/'
-    STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
+    STATICFILES_STORAGE = 'config.storage_backends.Storage'
 
     # Медиаконтент в S3
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"

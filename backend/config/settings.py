@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     'channels',
     'social_django',
     'drf_spectacular',
-    'storages',
 
     # Local apps
     'users.apps.UsersConfig',

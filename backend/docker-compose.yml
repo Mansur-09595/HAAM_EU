@@ -69,7 +69,6 @@ services:
     command: celery -A config worker --loglevel=INFO
     volumes:
       - .:/backend
-      - static_volume:/backend/staticfiles
     depends_on:
       - web
       - redis

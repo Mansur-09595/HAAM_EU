@@ -123,9 +123,9 @@ if USE_S3:
     AWS_QUERYSTRING_AUTH = False
 
     # Статика всё ещё можно отдавать белайтноизом
-    STATIC_LOCATION = "static"
+    STATIC_LOCATION = "staticfiles"
     STATIC_ROOT = BASE_DIR / "staticfiles"
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/staticfiles/'
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
 
     # Медиаконтент в S3

@@ -125,7 +125,7 @@ if USE_S3:
     # Статика всё ещё можно отдавать белайтноизом
     STATIC_LOCATION = "staticfiles"
     STATIC_ROOT = BASE_DIR / "staticfiles"
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/staticfiles/'
+    STATIC_URL = "https://haam-static.onrender.com/"
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
 
     # Медиаконтент в S3
@@ -148,7 +148,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 8,
+    'PAGE_SIZE': 12,
     'PAGE_SIZE_QUERY_PARAM': 'page_size',
 }
 

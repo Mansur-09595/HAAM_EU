@@ -1,12 +1,15 @@
+import requests
 from io import BytesIO
 
 from PIL import Image
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django_filters import rest_framework as filters
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Category, Listing, ListingImage, ListingVideo, Favorite
 from .permissions import IsOwnerOrAdmin
@@ -19,6 +22,7 @@ from .serializers import (
     ListingVideoSerializer,
     FavoriteSerializer
 )
+
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -207,3 +211,25 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
             raise permissions.PermissionDenied("Можно добавлять видео только к своим объявлениям")
 
         serializer.save(listing=listing)
+        
+class BelgianCitiesView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        username = getattr(settings, 'GEONAMES_USERNAME', None)
+        if not username:
+            return Response({'error': 'GeoNames username is not configured'}, status=500)
+
+        try:
+            geo_url = 'http://api.geonames.org/searchJSON'
+            params = {
+                'country': 'BE',
+                'featureClass': 'P',
+                'maxRows': 1000,
+                'username': username
+            }
+            res = requests.get(geo_url, params=params, timeout=10)
+            res.raise_for_status()
+            return Response(res.json())
+        except requests.RequestException as e:
+            return Response({'error': 'GeoNames request failed'}, status=502)

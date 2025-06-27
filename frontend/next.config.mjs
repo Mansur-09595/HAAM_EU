@@ -23,13 +23,13 @@ const nextConfig = {
     unoptimized: true,
     domains: ['https://haam-db.onrender.com'],
   },
-  remotePatterns: [
-    {
-      protocol: 'https',
-      hostname: 'haam-db.onrender.com',
-      pathname: '/media/**',
-    },
-  ],
+  // remotePatterns: [
+  //   {
+  //     protocol: 'https',
+  //     hostname: 'haam-db.onrender.com',
+  //     pathname: '/media/**',
+  //   },
+  // ],
   async rewrites() {
     return [
       {

@@ -24,7 +24,7 @@ export default function ListingsPage() {
     maxPrice,
   } = useAppSelector(state  => state.ads)
 
-  const PAGE_SIZE = 8
+  const PAGE_SIZE = 12
   const totalPages = Math.ceil(count / PAGE_SIZE)
 
   // При монтировании и при смене page или фильтров — запрашиваем список

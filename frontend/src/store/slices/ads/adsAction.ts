@@ -33,7 +33,7 @@ export const fetchAds = createAsyncThunk<
   ) => {
     const params = new URLSearchParams()
     params.set('page', String(page))
-    params.set('page_size', String(8))
+    params.set('page_size', String(12))
     if (category) params.set('category_slug', category)
     if (city) params.set('location', city)
     if (searchTerm) params.set('search', searchTerm)

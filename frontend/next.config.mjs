@@ -21,7 +21,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['haam-db.onrender.com'],
+    domains: ['https://haam-db.onrender.com'],
   },
   remotePatterns: [
     {

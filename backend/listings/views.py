@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
 
 from .models import Category, Listing, ListingImage, ListingVideo, Favorite
 from .permissions import IsOwnerOrAdmin
@@ -213,6 +214,7 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
 
         serializer.save(listing=listing)
         
+@extend_schema(responses=CitySerializer(many=True))
 class BelgianCitiesView(APIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CitySerializer
@@ -232,6 +234,14 @@ class BelgianCitiesView(APIView):
             }
             res = requests.get(geo_url, params=params, timeout=10)
             res.raise_for_status()
-            return Response(res.json())
-        except requests.RequestException as e:
+
+            # Извлекаем только нужные поля
+            geonames = res.json().get('geonames', [])
+            cities = [
+                {'name': g['name'], 'admin': g.get('adminName1', '')}
+                for g in geonames
+            ]
+
+            return Response(cities)
+        except requests.RequestException:
             return Response({'error': 'GeoNames request failed'}, status=502)

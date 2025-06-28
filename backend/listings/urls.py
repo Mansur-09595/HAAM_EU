@@ -9,6 +9,6 @@ router.register(r'', views.ListingViewSet)
 router.register(r'videos', views.ListingVideoViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('belgian-cities/', views.BelgianCitiesView.as_view(), name='belgian-cities'),
+    path('', include(router.urls)),
 ]

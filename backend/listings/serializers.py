@@ -156,3 +156,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = ('id', 'user', 'listing', 'listing_id', 'created_at')
         read_only_fields = ('user', 'created_at')
+
+class CitySerializer(serializers.Serializer):
+    name = serializers.CharField()
+    admin = serializers.CharField()

@@ -20,7 +20,8 @@ from .serializers import (
     ListingUpdateSerializer,
     ListingImageSerializer,
     ListingVideoSerializer,
-    FavoriteSerializer
+    FavoriteSerializer,
+    CitySerializer,
 )
 
 
@@ -214,6 +215,7 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
         
 class BelgianCitiesView(APIView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = CitySerializer
 
     def get(self, request):
         username = getattr(settings, 'GEONAMES_USERNAME', None)

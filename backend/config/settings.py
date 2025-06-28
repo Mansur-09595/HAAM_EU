@@ -300,3 +300,6 @@ CSRF_COOKIE_SECURE    = True
 
 # Staticfiles via WhiteNoise
 #STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Geonames username for Belgian cities API
+GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")

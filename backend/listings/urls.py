@@ -5,8 +5,8 @@ from . import views
 router = DefaultRouter()
 router.register(r'categories', views.CategoryViewSet)
 router.register(r'images', views.ListingImageViewSet)
-router.register(r'', views.ListingViewSet)
 router.register(r'videos', views.ListingVideoViewSet)
+router.register(r'', views.ListingViewSet)
 
 urlpatterns = [
     path('belgian-cities/', views.BelgianCitiesView.as_view(), name='belgian-cities'),

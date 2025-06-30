@@ -1,7 +1,7 @@
 import requests
 from io import BytesIO
 
-from PIL import Image
+from PIL import Image, ImageOps
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django_filters import rest_framework as filters
@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema
 
 from .models import Category, Listing, ListingImage, ListingVideo, Favorite
 from .permissions import IsOwnerOrAdmin
@@ -24,6 +25,27 @@ from .serializers import (
     CitySerializer,
 )
 
+
+def process_image(image_file, size=(800, 600), quality=85):
+    """
+    Обрезает изображение по центру до нужного размера, конвертирует в WebP
+    и возвращает ContentFile для сохранения в модель.
+    """
+    img = Image.open(image_file)
+    # Сохраняем альфа-канал для PNG/GIF
+    if img.mode in ('RGBA', 'LA'):
+        background = Image.new('RGBA', img.size, (255, 255, 255, 0))
+        background.paste(img, mask=img.split()[3])
+        img = background
+    else:
+        img = img.convert('RGB')
+    # Центр-кроп и ресайз
+    img = ImageOps.fit(img, size, centering=(0.5, 0.5))
+    buf = BytesIO()
+    # Конвертация в WebP для оптимальной компрессии
+    img.save(buf, format='WEBP', quality=quality)
+    webp_name = f"{image_file.name.rsplit('.', 1)[0]}.webp"
+    return ContentFile(buf.getvalue(), name=webp_name)
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -83,38 +105,29 @@ class ListingViewSet(viewsets.ModelViewSet):
         return ListingSerializer
 
     def get_permissions(self):
-        # публично доступно только чтение списка и деталей
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-
-        # создание и просмотр собственных/избранных — только для залогиненных
         if self.action in ['create', 'my_listings', 'favorites', 'favorite', 'unfavorite']:
             return [permissions.IsAuthenticated()]
-
-        # изменение и удаление — только владелец или админ
         if self.action in ['update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
-
-        # по умолчанию — требуем авторизацию
         return [permissions.IsAuthenticated()]
 
     def retrieve(self, request, *args, **kwargs):
-        # при просмотре детали увеличиваем счетчик
         instance = self.get_object()
-        instance.view_count = instance.view_count + 1
+        instance.view_count += 1
         instance.save(update_fields=['view_count'])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def favorite(self, request, slug=None):
-        listing = self.get_object()  # под капотом будет искать по slug
+        listing = self.get_object()
         fav, created = Favorite.objects.get_or_create(user=request.user, listing=listing)
         code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         return Response({'status': 'added' if created else 'already in favorites'}, status=code)
 
-
-    @action(detail=True, methods=['delete'])  # рекомендую поставить DELETE для unfavorite
+    @action(detail=True, methods=['delete'])
     def unfavorite(self, request, slug=None):
         listing = self.get_object()
         try:
@@ -123,7 +136,6 @@ class ListingViewSet(viewsets.ModelViewSet):
             return Response({'status': 'removed'}, status=status.HTTP_204_NO_CONTENT)
         except Favorite.DoesNotExist:
             return Response({'status': 'not in favorites'}, status=status.HTTP_404_NOT_FOUND)
-
 
     @action(detail=False, methods=['get'])
     def my_listings(self, request):
@@ -155,14 +167,11 @@ class ListingImageViewSet(viewsets.ModelViewSet):
     serializer_class = ListingImageSerializer
 
     def get_permissions(self):
-        # чтение (list/retrieve) доступно всем, но мы фильтруем в get_queryset()
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        # создание/изменение/удаление — только владелец или админ
         return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
 
     def get_queryset(self):
-        # показываем только свои картинки
         if self.action in ['list', 'retrieve']:
             return ListingImage.objects.all()
         return ListingImage.objects.filter(listing__owner=self.request.user)
@@ -170,17 +179,13 @@ class ListingImageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         listing_id = self.request.data.get('listing')
         listing = Listing.objects.get(id=listing_id)
-
         if listing.owner != self.request.user:
             raise permissions.PermissionDenied("Можно добавлять фото только к своим объявлениям")
 
         image_file = self.request.FILES.get('image')
         if image_file:
-            img = Image.open(image_file).convert('RGB').resize((150, 150))
-            buf = BytesIO()
-            img.save(buf, format='JPEG')
-            content = ContentFile(buf.getvalue(), name=image_file.name)
-            serializer.save(listing=listing, image=content)
+            processed = process_image(image_file)
+            serializer.save(listing=listing, image=processed)
         else:
             serializer.save(listing=listing)
 
@@ -193,13 +198,11 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
     serializer_class = ListingVideoSerializer
 
     def get_permissions(self):
-        # как и для картинок: чтение — всем, запись — только владелец/админ
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
 
     def get_queryset(self):
-        # показываем только видео своих объявлений
         if self.action in ['list', 'retrieve']:
             return ListingVideo.objects.all()
         return ListingVideo.objects.filter(listing__owner=self.request.user)
@@ -207,10 +210,8 @@ class ListingVideoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         listing_id = self.request.data.get('listing')
         listing = Listing.objects.get(id=listing_id)
-
         if listing.owner != self.request.user:
             raise permissions.PermissionDenied("Можно добавлять видео только к своим объявлениям")
-
         serializer.save(listing=listing)
         
 class BelgianCitiesView(APIView):

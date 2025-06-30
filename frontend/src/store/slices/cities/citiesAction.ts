@@ -1,23 +1,36 @@
-// src/store/slices/cities/citiesAction.ts
 import { createAsyncThunk } from '@reduxjs/toolkit'
 
-export const fetchBelgianCities = createAsyncThunk<
-  { name: string; admin: string }[],
-  void,
-  { rejectValue: string }
->(
-  'cities/fetchBelgian',
-  async (_, { rejectWithValue }) => {
-    const username = process.env.NEXT_PUBLIC_GEONAMES_USER
-    const res = await fetch(
-      `http://api.geonames.org/searchJSON?country=BE&featureClass=P&maxRows=1000&username=${username}`
-    )
-    const data = await res.json()
-    if (!res.ok || !data.geonames) {
-      return rejectWithValue('Не удалось загрузить города')
+type City = {
+  name: string
+  admin: string
+}
+
+type Geoname = {
+  name: string
+  adminName1?: string
+}
+
+export const fetchBelgianCities = createAsyncThunk<City[],void,{ rejectValue: string }
+>('cities/fetchBelgian', async (_, { rejectWithValue }) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/listings/belgian-cities/`
+      )
+
+      if (!res.ok) {
+        return rejectWithValue('Ошибка при получении городов')
+      }
+
+      const data: { geonames?: Geoname[] } = await res.json()
+
+      const cities: City[] = (data.geonames || []).map((g) => ({
+        name: g.name,
+        admin: g.adminName1 || '',
+      }))
+
+      return cities.sort((a, b) => a.name.localeCompare(b.name))
+    } catch {
+      return rejectWithValue('Ошибка сети')
     }
-    return data.geonames
-      .map((g: { name: string; adminName1: string }) => ({ name: g.name, admin: g.adminName1 }))
-      .sort((a: { name: string; admin: string }, b: { name: string; admin: string }) => a.name.localeCompare(b.name))
   }
 )

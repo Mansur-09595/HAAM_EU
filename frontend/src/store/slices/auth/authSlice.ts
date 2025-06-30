@@ -42,7 +42,9 @@ const authSlice = createSlice({
     .addCase(loginUser.pending, state => { state.loading = true; state.error = null })
     .addCase(loginUser.rejected, (state, action) => {
       state.loading = false
-      state.error = action.payload ?? action.error.message ?? null ?? null
+      state.error = typeof action.payload === 'string'
+      ? action.payload
+      : action.error?.message ?? 'Неизвестная ошибка'
     })
 
     // checkAuth
@@ -67,7 +69,8 @@ const authSlice = createSlice({
       state.error = null
     })
     .addCase(refreshToken.rejected, (state, action) => {
-      state.error = action.payload ?? action.error.message ?? null ?? null
+      state.error = action.payload ?? action.error.message ?? 'Ошибка обновления токена'
+
     })
   },
 })

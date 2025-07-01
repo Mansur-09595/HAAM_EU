@@ -10,7 +10,7 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ('id', 'name', 'parent', 'icon', 'slug', 'children')
     
-    def get_children(self, obj):
+    def get_children(self, obj) -> list:
         children = Category.objects.filter(parent=obj)
         return CategorySerializer(children, many=True).data if children.exists() else []
 
@@ -33,13 +33,13 @@ class ListingSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('owner', 'view_count', 'created_at', 'updated_at')
     
-    def get_images(self, obj):
+    def get_images(self, obj) -> list:
         return ListingImageSerializer(obj.images.all(), many=True).data
 
-    def get_videos(self, obj):
+    def get_videos(self, obj) -> list:
         return ListingVideoSerializer(obj.videos.all(), many=True).data
 
-    def get_is_favorited(self, obj):
+    def get_is_favorited(self, obj) -> bool:
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return Favorite.objects.filter(user=request.user, listing=obj).exists()
@@ -135,9 +135,20 @@ class ListingUpdateSerializer(serializers.ModelSerializer):
 
 
 class ListingImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField()
+
     class Meta:
         model = ListingImage
         fields = ('id', 'image', 'is_primary', 'created_at')
+
+    def validate_image(self, img):
+        max_mb = 2  # Максимальный размер исходного файла в МБ
+        if img.size > max_mb * 1024 * 1024:
+            raise serializers.ValidationError(
+                f'Максимальный размер файла — {max_mb} МБ. ' \
+                f'Ваш файл {(img.size/(1024*1024)):.1f} МБ.'
+            )
+        return img
 
 class ListingVideoSerializer(serializers.ModelSerializer):
     class Meta:

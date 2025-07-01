@@ -1,7 +1,5 @@
-import requests
-from io import BytesIO
+import requests, pyvips
 
-from PIL import Image, ImageOps
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django_filters import rest_framework as filters
@@ -10,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
 
 from .models import Category, Listing, ListingImage, ListingVideo, Favorite
 from .permissions import IsOwnerOrAdmin
@@ -26,26 +23,26 @@ from .serializers import (
 )
 
 
-def process_image(image_file, size=(800, 600), quality=85):
+def process_image_with_vips(image_file, max_size=1280, quality=75):
     """
-    Обрезает изображение по центру до нужного размера, конвертирует в WebP
-    и возвращает ContentFile для сохранения в модель.
+    Обрабатывает изображение через pyvips: масштабирует так, чтобы
+    ни ширина, ни высота не превышали max_size, конвертирует в JPEG,
+    и возвращает ContentFile.
     """
-    img = Image.open(image_file)
-    # Сохраняем альфа-канал для PNG/GIF
-    if img.mode in ('RGBA', 'LA'):
-        background = Image.new('RGBA', img.size, (255, 255, 255, 0))
-        background.paste(img, mask=img.split()[3])
-        img = background
-    else:
-        img = img.convert('RGB')
-    # Центр-кроп и ресайз
-    img = ImageOps.fit(img, size, centering=(0.5, 0.5))
-    buf = BytesIO()
-    # Конвертация в WebP для оптимальной компрессии
-    img.save(buf, format='WEBP', quality=quality)
-    webp_name = f"{image_file.name.rsplit('.', 1)[0]}.webp"
-    return ContentFile(buf.getvalue(), name=webp_name)
+    # читаем байты
+    buf = image_file.read()
+    # создаём vips-образ
+    image = pyvips.Image.new_from_buffer(buf, "")
+    # вычисляем масштаб
+    scale = min(max_size / image.width, max_size / image.height, 1.0)
+    if scale < 1.0:
+        image = image.resize(scale)
+    # сохраняем в JPEG-буфер
+    jpeg_buf = image.jpegsave_buffer(Q=quality)
+    # формируем имя
+    base, _ = image_file.name.rsplit('.', 1)
+    name = f"{base}.jpg"
+    return ContentFile(jpeg_buf, name=name)
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -184,7 +181,7 @@ class ListingImageViewSet(viewsets.ModelViewSet):
 
         image_file = self.request.FILES.get('image')
         if image_file:
-            processed = process_image(image_file)
+            processed = process_image_with_vips(image_file)
             serializer.save(listing=listing, image=processed)
         else:
             serializer.save(listing=listing)

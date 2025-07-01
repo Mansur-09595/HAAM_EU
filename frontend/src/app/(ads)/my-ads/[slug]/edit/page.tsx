@@ -1,6 +1,7 @@
 // src/app/(ads)/my-ads/[slug]/edit/page.tsx
 "use client";
 
+import imageCompression from 'browser-image-compression'
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -162,23 +163,42 @@ export default function EditListingPage() {
   // ───────────────────────────────────────────────────────────────────────────
   // Выбор новых файлов (до 10 штук), которые пользователь хочет добавить
   // ───────────────────────────────────────────────────────────────────────────
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedAd) return; // не разрешаем без выбранного объявления
-
-    const files = e.target.files;
-    if (!files) return;
-
-    // Берём столько файлов, чтобы итого не было больше 10 превью
-    const fileArray = Array.from(files).slice(0, 10 - imagesPreview.length);
-    setSelectedFiles((prev) => [...prev, ...fileArray].slice(0, 10));
-
-    // Генерируем локальные preview-URL
-    const newPreviews = fileArray.map((file) => URL.createObjectURL(file));
-    setImagesPreview((prev) => [...prev, ...newPreviews].slice(0, 10));
-
-    e.target.value = "";
-  };
-
+  const MAX_FILES = 10
+  const MAX_FINAL_MB = 1       // конечный размер ≤1 МБ
+  const MAX_DIMENSION = 1920   // максимальная ширина/высота
+  
+  // … внутри компонента, вместо существующего handleImageChange:
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedAd) return
+  
+    const files = e.target.files
+    if (!files) return
+  
+    // Берём не более оставшихся слотов
+    const incoming = Array.from(files).slice(0, MAX_FILES - selectedFiles.length)
+    const compressedFiles: File[] = []
+    const newPreviews: string[] = []
+  
+    for (const file of incoming) {
+      try {
+        const compressed = await imageCompression(file, {
+          maxSizeMB: MAX_FINAL_MB,
+          maxWidthOrHeight: MAX_DIMENSION,
+          useWebWorker: true,
+        })
+        compressedFiles.push(compressed)
+        newPreviews.push(URL.createObjectURL(compressed))
+      } catch {
+        // если компрессия упала — всё равно добавим оригинал
+        compressedFiles.push(file)
+        newPreviews.push(URL.createObjectURL(file))
+      }
+    }
+  
+    setSelectedFiles(prev => [...prev, ...compressedFiles].slice(0, MAX_FILES))
+    setImagesPreview(prev => [...prev, ...newPreviews].slice(0, MAX_FILES))
+    e.target.value = ''
+  }
   // ───────────────────────────────────────────────────────────────────────────
   // Удаление картинки (из сервера, если это был URL из selectedAd.images,
   // или просто удаление локального превью, если это новая картинка)
@@ -266,7 +286,7 @@ export default function EditListingPage() {
           selectedFiles.map((file) => {
             const fd = new FormData();
             fd.append("listing", String(selectedAd.id)); // ключ "listing" обязательно должен быть числовой ID
-            fd.append("image", file);
+            fd.append("image", file, file.name);
             // Логируем содержимое FormData перед отправкой
             for (const [key, val] of fd.entries() as Iterable<[string, FormDataEntryValue]>) {
               console.log("[addListingImage] FormData:", key, val);

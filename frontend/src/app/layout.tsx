@@ -24,7 +24,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Providers>
             <div className="flex min-h-screen flex-col">
               <Header />
-              <main className="flex-1">{children}</main>
+                <main className="flex-1 min-h-screen pb-16 md:pb-0">
+                  {children}
+                </main>
               <Footer />
             </div>
             <CookieBanner />

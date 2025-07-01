@@ -1,10 +1,12 @@
 'use client'
 
+import React, { useState } from "react"
 import Link from "next/link"
 import { useAppDispatch, useAppSelector } from '@/store/store'
 import { loginUser } from '@/store/slices/auth/authAction'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
+import { Loader2 } from 'lucide-react'
 
 type LoginForm = {
   email: string
@@ -15,15 +17,20 @@ export default function LoginPage() {
   const dispatch = useAppDispatch()
   const router = useRouter()
 
-  const { error, loading } = useAppSelector(state => state.auth)
+  const { error } = useAppSelector(state => state.auth)
+  const [loading, setLoading] = useState(false)
+
   const { register, handleSubmit } = useForm<LoginForm>()
 
   const onSubmit = async (data: LoginForm) => {
+    setLoading(true)
     try {
       const result = await dispatch(loginUser(data)).unwrap()
       if (result) router.push('/')
     } catch {
-      // Ошибка уже отобразится через Redux error
+      // Ошибка уже отображена через Redux error
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -33,17 +40,21 @@ export default function LoginPage() {
 
       {error && <p className="text-red-500">{error}</p>}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form autoComplete="on" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <input
+          id="email"
           type="email"
           placeholder="Email"
+          autoComplete="username"
           {...register('email')}
           required
           className="w-full p-2 border rounded"
         />
         <input
+          id="password"
           type="password"
           placeholder="Пароль"
+          autoComplete="current-password"
           {...register('password')}
           required
           className="w-full p-2 border rounded"
@@ -51,15 +62,18 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full flex items-center justify-center"
         >
-          {loading ? 'Входим...' : 'Войти'}
-        </button>
-        {loading ? (
-            <div className="bg-green-600 text-white px-4 py-2 rounded w-full text-center opacity-50 cursor-not-allowed">
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Входим...
-            </div>
+            </>
           ) : (
+            'Войти'
+          )}
+        </button>
+        {!loading && (
           <Link
             href="/users/new"
             className="block w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-center"

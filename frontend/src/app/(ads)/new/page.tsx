@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import imageCompression from 'browser-image-compression'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -66,13 +67,39 @@ export default function CreateAdPage() {
     return () => imagesPreview.forEach(url => URL.revokeObjectURL(url))
   }, [imagesPreview])
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const MAX_FILES = 10
+  const MAX_FINAL_MB = 1       // хотим ≤1 МБ на отправку
+  const MAX_DIMENSION = 1920   // максимальная ширина/высота
+  
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
-    const fileArray = Array.from(files).slice(0, 10 - selectedFiles.length)
-    setSelectedFiles(prev => [...prev, ...fileArray].slice(0, 10))
-    const previews = fileArray.map(file => URL.createObjectURL(file))
-    setImagesPreview(prev => [...prev, ...previews].slice(0, 10))
+  
+    const incoming = Array.from(files).slice(0, MAX_FILES - selectedFiles.length)
+    const compressedFiles: File[] = []
+    const previews: string[] = []
+  
+    for (const  file of incoming) {
+      try {
+        const compressed = await imageCompression(file, {
+          maxSizeMB: MAX_FINAL_MB,
+          maxWidthOrHeight: MAX_DIMENSION,
+          useWebWorker: true,
+        })
+        compressedFiles.push(compressed)
+        previews.push(URL.createObjectURL(compressed))
+      } catch {
+        // на случай сбоя компрессии — всё равно отправим оригинал,
+        // но это крайне редко случается.
+        compressedFiles.push(file)
+        previews.push(URL.createObjectURL(file))
+      }
+    }
+  
+    setSelectedFiles(prev => [...prev, ...compressedFiles].slice(0, MAX_FILES))
+    setImagesPreview(prev => [...prev, ...previews].slice(0, MAX_FILES))
+    
+    // сбрасываем input, чтобы можно было загрузить те же файлы ещё раз
     e.target.value = ''
   }
 
@@ -99,7 +126,7 @@ export default function CreateAdPage() {
       formData.append("location", data.location)
 
       selectedFiles.forEach((file) => {
-        formData.append("images", file)
+        formData.append("images", file, file.name)
       })
 
       const result = await dispatch(addAd(formData)).unwrap()

@@ -9,32 +9,33 @@ WORKDIR /backend
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 4) Устанавливаем OS-пакеты, нужные для psycopg2 и сборки Pillow и т. д.
+# 4) Устанавливаем OS-пакеты, нужные для psycopg2, Pillow и libvips
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
-    libssl-dev \  
-    && rm -rf /var/lib/apt/lists/*
+    libssl-dev \
+    libvips-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-    # создаём непривилегированного юзера
+# 5) Создаём непривилегированного юзера
 RUN addgroup --system app && adduser --system --ingroup app app
 
-# 5) Копируем только файл зависимостей (requirements.txt) и устанавливаем их
+# 6) Копируем зависимости и устанавливаем их вместе с pyvips[binary]
 COPY requirements.txt /backend/
+# Устанавливаем сначала pyvips[binary] для поддержки WebP и других форматов
+RUN pip install --no-cache-dir "pyvips[binary]"
+# Затем устанавливаем остальные пакеты
 RUN pip install --no-cache-dir -r /backend/requirements.txt
 
-# 6) Копируем исходный код приложения. В локальной разработке он монтируется
-#    через docker-compose, но в окружениях вроде Render его нужно включить в
-#    образ, иначе приложение не найдёт модуль config и не запустится.
+# 7) Копируем исходный код приложения
 COPY . /backend/
 
-# create a system user “celery” (no password, no home)
+# 8) Создаём пользователя для Celery
 RUN addgroup --system celery \
- && adduser  --system --ingroup celery celery
+ && adduser --system --ingroup celery celery
 
-# from here on, we’re no longer root
+# 9) Переключаемся на неправа пользовател
 USER celery
 
-# 7) По умолчанию команда daphne (ASGI-сервер). 
-#    Но docker-compose её перекрывает vlastní командой.
+# 10) По умолчанию запускаем Daphne (ASGI-сервер)
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

@@ -133,6 +133,37 @@ export class TokenManager {
   }
 
   /**
+   * Ensure we have a valid access token. If the current token is
+   * expired and a refresh token is available, it will be refreshed.
+   */
+  static async getValidAccessToken(): Promise<string | null> {
+    const token = this.getAccessToken();
+    if (!token) return null;
+
+    // Decode exp field to avoid an extra network call when possible
+    try {
+      // Lazy load to avoid including in server bundle unnecessarily
+      const { jwtDecode } = await import('jwt-decode');
+      const { exp } = jwtDecode<{ exp: number }>(token);
+      if (Date.now() < exp * 1000 - 30_000) {
+        return token;
+      }
+    } catch {
+      // Fallback to verify endpoint
+      const ok = await this.verifyToken();
+      if (ok) return token;
+    }
+
+    if (!this.hasRefreshToken()) return null;
+    try {
+      const newToken = await this.refreshAccessToken();
+      return newToken;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Initialize storage listener to react to token changes in other tabs.
    * Pass a callback to handle logout or UI update.
    */

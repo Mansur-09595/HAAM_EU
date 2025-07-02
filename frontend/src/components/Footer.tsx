@@ -193,8 +193,8 @@ export default function Footer() {
           </Link>
 
           <Link
-            href="/listings"
-            className={`flex flex-col items-center p-2 ${pathname === "/listings" ? "text-blue-600" : "text-gray-600"}`}
+            href="/ads"
+            className={`flex flex-col items-center p-2 ${pathname === "/ads" ? "text-blue-600" : "text-gray-600"}`}
           >
             <Search className="h-6 w-6" />
             <span className="text-xs mt-1">Поиск</span>

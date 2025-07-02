@@ -6,15 +6,15 @@ import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
 
-// Ваш «первичный» токен из бэка
-const DEMO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzI0MTE4LCJpYXQiOjE3NTA3MjM4MTgsImp0aSI6IjJhMDMzNTI1NjU5ZTRmMGRiMTE3M2I5YTNhMTgwODMwIiwidXNlcl9pZCI6M30.mDLtM8b2KWCaHREHlcbEcvCpPVCn4vKikrG92d2_H4U"
+// // Ваш «первичный» токен из бэка
+// const DEMO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzI0MTE4LCJpYXQiOjE3NTA3MjM4MTgsImp0aSI6IjJhMDMzNTI1NjU5ZTRmMGRiMTE3M2I5YTNhMTgwODMwIiwidXNlcl9pZCI6M30.mDLtM8b2KWCaHREHlcbEcvCpPVCn4vKikrG92d2_H4U"
 
 
-// Хелпер для заголовка авторизации: сначала из localStorage, иначе DEMO_ACCESS_TOKEN
-const getAuthHeader = () => {
-  const token = TokenManager.getAccessToken() || DEMO_ACCESS_TOKEN
-  return { Authorization: `Bearer ${token}` }
-}
+// // Хелпер для заголовка авторизации: сначала из localStorage, иначе DEMO_ACCESS_TOKEN
+// const getAuthHeader = () => {
+//   const token = TokenManager.getAccessToken() || DEMO_ACCESS_TOKEN
+//   return { Authorization: `Bearer ${token}` }
+// }
 
 // GET /api/users/
 export const fetchUsers = createAsyncThunk<Users[], void, { rejectValue: string }>(
@@ -24,7 +24,7 @@ export const fetchUsers = createAsyncThunk<Users[], void, { rejectValue: string 
       const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeader(),
+          // ...getAuthHeader(),
         },
       })
       const data = (await res.json()) as { results: Users[]; detail?: string }
@@ -47,7 +47,7 @@ export const fetchUserById = createAsyncThunk<Users, number, { rejectValue: stri
       const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/${id}/`, {
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeader(),
+          // ...getAuthHeader(),
         },
       })
       const data = (await res.json()) as Users & { detail?: string }
@@ -75,7 +75,7 @@ export const updateUser = createAsyncThunk<
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeader(),
+          // ...getAuthHeader(),
         },
         body: JSON.stringify(payload),
       })
@@ -97,7 +97,7 @@ export const deleteUser = createAsyncThunk<number, number, { rejectValue: string
     try {
       const res = await TokenManager.fetchWithAuth(`${API_BASE}/users/${id}/`, {
         method: 'DELETE',
-        headers: getAuthHeader(),
+        // headers: getAuthHeader(),
       })
       if (!res.ok) {
         const data = (await res.json()) as { detail?: string }

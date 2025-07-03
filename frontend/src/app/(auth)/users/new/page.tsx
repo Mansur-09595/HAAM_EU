@@ -5,7 +5,6 @@ import { useForm, SubmitHandler } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { useAppDispatch } from '@/store/store'
 import { createUser } from '@/store/slices/auth/users/usersAction'
-import { loginUser } from '@/store/slices/auth/authAction'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,12 +47,9 @@ export default function NewUserPage() {
       const user = await dispatch(createUser(formData)).unwrap()
 
       toast({ title: 'Регистрация прошла успешно', description: user.username })
-
-      // 2) Потом сразу логинимся
-      await dispatch(loginUser({ email: data.email, password: data.password })).unwrap()
-
       // 3) Редиректим на защищённую страницу, например в профиль
-      router.push(`/confirm-mail-sent}`)
+      router.push(`/confirm-mail-sent`)
+
     } catch (err: unknown) {
       // Если ошибка из createUser или loginUser, то она уже обработана в этих эк
       // если ошибка из createUser или loginUser

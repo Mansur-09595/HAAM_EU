@@ -307,4 +307,3 @@ CSRF_COOKIE_SECURE    = True
 # Geonames username for Belgian cities API
 GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")
 
-#7c7340ae6935c2afd805ca2e75db5c6f-6d5bd527-a4f932a5 - Haam_Be_Mailgun

@@ -56,41 +56,24 @@ export default function ListingDetailPage() {
     return null
   }
 
-  // Если профиль не загрузился (нет токена или он недействителен),
-  // показываем приглашение зайти под своим аккаунтом, чтобы начать переписку
-  if (!currentUser) {
-    return (
-      <div className="container mx-auto px-4 py-6 text-center">
-        <p>Чтобы написать владельцу, нужно войти в систему</p>
-        <Button asChild>
-          <Link href="/login">Перейти к логину</Link>
-        </Button>
-      </div>
-    )
-  }
-
   const handleStartChat = async () => {
-    // Не позволяйте писать самому себе
+    if (!currentUser) {
+      router.push('/login')
+      return
+    }
     if (currentUser.id === listing.owner.id) {
       return
     }
-
     try {
-      // Вызываем Thunk, который создаст (или вернёт) беседу
       const conv = await dispatch(
-        createConversation({
-          participant_id: listing.owner.id,
-          listing_id: listing.id,
-        })
+        createConversation({ participant_id: listing.owner.id, listing_id: listing.id })
       ).unwrap()
-
-      // И сразу пушим на страницу /messages/[conversationId]
       router.push(`/chat?conv=${conv.id}`)
     } catch (err) {
       console.error('Не удалось начать переписку:', err)
-      // Здесь можно показать уведомление об ошибке
     }
   }
+  
   const isFavorite =
           typeof listing.is_favorited === 'boolean'
             ? listing.is_favorited

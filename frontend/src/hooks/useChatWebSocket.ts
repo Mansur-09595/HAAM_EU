@@ -32,12 +32,19 @@ export function useChatWebSocket(
 
       socket.onopen = () => console.log('[WebSocket] chat connected')
       socket.onmessage = (e) => {
+        console.time('WS onmessage')
+        performance.mark('msg-start')
         const data = JSON.parse(e.data)
         if (data.type === 'chat_message') {
           const message: IMessage = data.message
           dispatch(
-            receiveMessage({ conversationId: message.conversation_id, message })
+            receiveMessage({ 
+              conversationId: message.conversation_id, 
+              message })
           )
+          console.timeEnd('WS onmessage')
+          performance.mark('msg-end')
+          performance.measure('message-handling', 'msg-start', 'msg-end')
         } else if (data.type === 'ping') {
           socket?.send(JSON.stringify({ type: 'pong' }))
         }

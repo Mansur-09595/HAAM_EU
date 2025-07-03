@@ -24,6 +24,7 @@ export const loginUser = createAsyncThunk<
         return rejectWithValue(msg)
       }
       const data = await res.json()
+      // сохраняем оба токена
       TokenManager.setTokens({ access: data.access, refresh: data.refresh })
       return data
     } catch {
@@ -49,7 +50,7 @@ export const refreshToken = createAsyncThunk<
   }
 )
 
-// Thunk: проверка авторизации
+// Thunk: проверка авторизации (получение профиля)
 export const checkAuth = createAsyncThunk<Users, void, { rejectValue: string }>(
   'auth/check',
   async (_, { rejectWithValue }) => {

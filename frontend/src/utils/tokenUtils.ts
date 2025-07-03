@@ -61,15 +61,20 @@ export class TokenManager {
   static async refreshAccessToken(): Promise<string> {
     if (!this.refreshPromise) {
       const refreshToken = this.getRefreshToken();
+      console.log('Attempting to refresh with token:', refreshToken);
       if (!refreshToken) {
+        console.error('No refresh token available');
+        // Import router from 'next/router' at the top of the file
         throw new Error('No refresh token available');
       }
+      console.log('Attempting to refresh with token:', refreshToken);
       this.refreshPromise = (async () => {
-        const res = await fetch(`${this.API_BASE}/token/refresh/`, {
+        const res = await fetch(`${this.API_BASE}/users/token/refresh/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh: refreshToken }),
         });
+        console.log('Refresh response:', res.status, await res.text());
         if (!res.ok) {
           this.clearTokens();
           const err = await res.json().catch(() => ({}));
@@ -79,7 +84,9 @@ export class TokenManager {
         this.setAccessToken(data.access);
         if (data.refresh) {
           localStorage.setItem(this.REFRESH_TOKEN_KEY, data.refresh);
+          console.log('New access token saved:', data.access);
         }
+        console.error('Token refresh failed:', data);
         return data.access as string;
       })().finally(() => {
         this.refreshPromise = null;

@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 
 @shared_task
 def send_confirmation_email(email: str, token: str):
-    link = f"{settings.FRONTEND_URL}/users/confirm-email?token={token}"
+    link = f"{settings.FRONTEND_URL}/confirm-email?token={token}"
     subject = "Подтвердите вашу почту"
     message = (
         f"Здравствуйте!\n\n"

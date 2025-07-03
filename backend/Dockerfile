@@ -38,4 +38,4 @@ RUN addgroup --system celery \
 USER celery
 
 # 10) По умолчанию запускаем Daphne (ASGI-сервер)
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]

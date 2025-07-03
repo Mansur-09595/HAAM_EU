@@ -6,16 +6,6 @@ import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
 
-// // Ваш «первичный» токен из бэка
-// const DEMO_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUwNzI0MTE4LCJpYXQiOjE3NTA3MjM4MTgsImp0aSI6IjJhMDMzNTI1NjU5ZTRmMGRiMTE3M2I5YTNhMTgwODMwIiwidXNlcl9pZCI6M30.mDLtM8b2KWCaHREHlcbEcvCpPVCn4vKikrG92d2_H4U"
-
-
-// // Хелпер для заголовка авторизации: сначала из localStorage, иначе DEMO_ACCESS_TOKEN
-// const getAuthHeader = () => {
-//   const token = TokenManager.getAccessToken() || DEMO_ACCESS_TOKEN
-//   return { Authorization: `Bearer ${token}` }
-// }
-
 // GET /api/users/
 export const fetchUsers = createAsyncThunk<Users[], void, { rejectValue: string }>(
   'users/fetchAll',
@@ -140,11 +130,7 @@ export const createUser = createAsyncThunk<
   }
 )
 
-export const confirmEmail = createAsyncThunk<
-  void,
-  { token: string },
-  { rejectValue: string }
->(
+export const confirmEmail = createAsyncThunk<void, {token:string}, {rejectValue:string}>(
   'auth/confirmEmail',
   async ({ token }, { rejectWithValue }) => {
     try {
@@ -152,15 +138,14 @@ export const confirmEmail = createAsyncThunk<
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
-      })
+      });
       if (!res.ok) {
-        const msg = await AuthErrorHandler.handle(res)
-        return rejectWithValue(msg)
+        const msg = await AuthErrorHandler.handle(res);
+        return rejectWithValue(msg);
       }
-      // если всё ок — просто возвращаем void
-      return
+      return;
     } catch {
-      return rejectWithValue('Ошибка сети при подтверждении почты')
+      return rejectWithValue('Ошибка сети при подтверждении почты');
     }
   }
-)
+);

@@ -306,4 +306,3 @@ CSRF_COOKIE_SECURE    = True
 
 # Geonames username for Belgian cities API
 GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")
-

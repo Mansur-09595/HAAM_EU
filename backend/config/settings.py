@@ -307,3 +307,17 @@ CSRF_COOKIE_SECURE    = True
 
 # Geonames username for Belgian cities API
 GEONAMES_USERNAME = os.getenv("GEONAMES_USERNAME")
+
+# В конце settings.py
+if REDIS_URL and REDIS_URL.startswith('rediss://'):
+    try:
+        import redis
+        print("Testing Redis SSL connection...")
+        r = redis.Redis.from_url(
+            REDIS_URL,
+            ssl_cert_reqs=None,
+            ssl_ca_certs=certifi.where()
+        )
+        print("Redis ping response:", r.ping())
+    except Exception as e:
+        print("Redis connection test failed:", str(e))

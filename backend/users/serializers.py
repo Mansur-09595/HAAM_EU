@@ -9,8 +9,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'phone', 'avatar', 'bio', 'date_joined', 'is_staff',)
-        read_only_fields = ('date_joined',)
+        fields = ('id', 'username', 'email', 'phone', 'avatar', 'bio', 'date_joined', 'is_staff', 'is_active',)
+        read_only_fields = ('date_joined', 'is_active', 'email_confirm_token')
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password  = serializers.CharField(

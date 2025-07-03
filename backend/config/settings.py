@@ -255,7 +255,8 @@ EMAIL_HOST          = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT          = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_HOST_USER     = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS       = True
+EMAIL_USE_TLS = True     # включаем STARTTLS
+EMAIL_USE_SSL = False    # SSL на порту 465 не используется
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@haam.be')
 
 # URL фронтенда, куда мы даём ссылку

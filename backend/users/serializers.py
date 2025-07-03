@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model, password_validation
 from rest_framework import serializers
 from .models import Subscription
 from django.utils.translation import gettext_lazy as _ 
+from .tasks import send_confirmation_email
 
 User = get_user_model()
 
@@ -72,12 +73,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # Убираем password2
         validated_data.pop('password2')
         password = validated_data.pop('password')
         user = User(**validated_data)
         user.set_password(password)
+        user.is_active = False
         user.save()
+
+        # Генерим токен и шлём письмо
+        token = user.generate_email_token()
+        send_confirmation_email.delay(user.email, token)
+
         return user
 
 class UserUpdateSerializer(serializers.ModelSerializer):

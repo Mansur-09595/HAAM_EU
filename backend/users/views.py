@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Subscription
+from django.utils import timezone
+from .models import Subscription, User
 from .permissions import IsSelfOrAdmin, IsSuperUser
 from .token import CustomTokenObtainPairSerializer
 from .serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer, SubscriptionSerializer
@@ -79,3 +80,26 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    
+class ConfirmEmailView(generics.GenericAPIView):
+    """
+    POST /api/users/confirm-email/  { "token": "<токен>" }
+    """
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        try:
+            user = User.objects.get(email_confirm_token=token)
+        except User.DoesNotExist:
+            return Response({'detail': 'Неверный или уже использованный токен'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # опционально: ограничить время жизни, например 24ч
+        if timezone.now() - user.email_confirm_sent_at > timezone.timedelta(hours=24):
+            return Response({'detail': 'Срок действия токена истёк'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = True
+        user.email_confirm_token = None
+        user.email_confirm_sent_at = None
+        user.save(update_fields=['is_active', 'email_confirm_token', 'email_confirm_sent_at'])
+        return Response({'detail': 'Email успешно подтверждён'}, status=status.HTTP_200_OK)

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { loginUser, checkAuth, refreshToken } from './authAction'
+import { loginUser, checkAuth, refreshToken, confirmEmail } from './authAction'
 import { Users } from '@/types/IUsers'
 import { TokenManager } from '@/utils/tokenUtils'
 
@@ -7,7 +7,9 @@ interface AuthState {
   user: Users | null
   accessToken: string | null
   refreshToken: string | null
-
+  confirmLoading: boolean
+  confirmError: string | null
+  confirmSuccess: boolean
   loading: boolean
   error: string | null
 }
@@ -16,7 +18,9 @@ const initialState: AuthState = {
   user: null,
   accessToken: typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null,
   refreshToken: typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null,
-
+  confirmLoading: false,
+  confirmError: null,
+  confirmSuccess: false,
   loading: false,
   error: null,
 }
@@ -30,6 +34,11 @@ const authSlice = createSlice({
       state.accessToken = null
       state.refreshToken = null
       TokenManager.clearTokens()
+    },
+    resetConfirmState(state) {
+      state.confirmLoading = false
+      state.confirmError = null
+      state.confirmSuccess = false
     },
   },
   extraReducers: builder => {
@@ -74,8 +83,23 @@ const authSlice = createSlice({
       state.error = action.payload ?? action.error.message ?? 'Ошибка обновления токена'
 
     })
+     // confirmEmail
+     builder
+     .addCase(confirmEmail.pending, state => {
+       state.confirmLoading = true
+       state.confirmError = null
+       state.confirmSuccess = false
+     })
+     .addCase(confirmEmail.fulfilled, state => {
+       state.confirmLoading = false
+       state.confirmSuccess = true
+     })
+     .addCase(confirmEmail.rejected, (state, action) => {
+       state.confirmLoading = false
+       state.confirmError = action.payload ?? action.error.message ?? 'Ошибка подтверждения'
+     })
   },
 })
 
-export const { logout } = authSlice.actions
+export const { logout, resetConfirmState } = authSlice.actions
 export default authSlice.reducer

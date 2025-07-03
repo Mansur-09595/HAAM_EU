@@ -44,9 +44,9 @@ export default function NewUserPage() {
       formData.append('phone', data.phone || '')
       formData.append('bio', data.bio || '')
 
-      const user = await dispatch(createUser(formData)).unwrap()
+      await dispatch(createUser(formData)).unwrap()
 
-      toast({ title: 'Регистрация прошла успешно', description: user.username })
+      toast({ title: 'Регистрация прошла успешно', description: 'Проверьте почту и перейдите по ссылке из письма.'})
       // 3) Редиректим на защищённую страницу, например в профиль
       router.push(`/confirm-mail-sent`)
 

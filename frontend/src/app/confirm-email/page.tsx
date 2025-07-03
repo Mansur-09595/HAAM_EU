@@ -3,8 +3,8 @@
 import { useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAppDispatch, useAppSelector } from '@/store/store'
-import { confirmEmail } from '@/store/slices/auth/users/usersAction'
-import { resetConfirmState } from '@/store/slices/auth/users/usersSlice'
+import { confirmEmail } from '@/store/slices/auth/authAction'
+import { resetConfirmState } from '@/store/slices/auth/authSlice'
 import { Button } from '@/components/ui/button'
 
 export default function ConfirmEmailPage() {
@@ -13,7 +13,7 @@ export default function ConfirmEmailPage() {
   const router = useRouter()
   const dispatch = useAppDispatch()
 
-  const { confirmLoading, confirmError, confirmSuccess } = useAppSelector(s => s.users)
+  const { confirmLoading, confirmError, confirmSuccess } = useAppSelector(s => s.auth)
 
   useEffect(() => {
     if (!token) return

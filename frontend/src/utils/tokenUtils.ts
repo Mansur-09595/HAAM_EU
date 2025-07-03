@@ -61,36 +61,35 @@ export class TokenManager {
   static async refreshAccessToken(): Promise<string> {
     if (!this.refreshPromise) {
       const refreshToken = this.getRefreshToken();
-      console.log('Attempting to refresh with token:', refreshToken);
       if (!refreshToken) {
-        console.error('No refresh token available');
-        // Import router from 'next/router' at the top of the file
         throw new Error('No refresh token available');
       }
-      console.log('Attempting to refresh with token:', refreshToken);
+  
       this.refreshPromise = (async () => {
-        const res = await fetch(`${this.API_BASE}/users/token/refresh/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: refreshToken }),
-        });
-        console.log('Refresh response:', res.status, await res.text());
-        if (!res.ok) {
-          this.clearTokens();
-          const err = await res.json().catch(() => ({}));
-          throw new Error((err as { detail?: string }).detail || 'Failed to refresh token');
+        try {
+          const res = await fetch(`${this.API_BASE}/token/refresh/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh: refreshToken }),
+          });
+  
+          if (!res.ok) {
+            this.clearTokens();
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.detail || 'Failed to refresh token');
+          }
+  
+          const data = await res.json();
+          this.setAccessToken(data.access);
+          if (data.refresh) {
+            localStorage.setItem(this.REFRESH_TOKEN_KEY, data.refresh);
+          }
+          return data.access;
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          throw error;
         }
-        const data = await res.json();
-        this.setAccessToken(data.access);
-        if (data.refresh) {
-          localStorage.setItem(this.REFRESH_TOKEN_KEY, data.refresh);
-          console.log('New access token saved:', data.access);
-        }
-        console.error('Token refresh failed:', data);
-        return data.access as string;
-      })().finally(() => {
-        this.refreshPromise = null;
-      });
+      })();
     }
     return this.refreshPromise;
   }
@@ -100,19 +99,27 @@ export class TokenManager {
    */
   static async fetchWithAuth(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers as HeadersInit);
-    const token = this.getAccessToken();
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-    const options: RequestInit = { ...init, headers };
-
+    let token = this.getAccessToken();
+    let options: RequestInit = { ...init, headers };
+  
+    // Первый запрос
     let response = await fetch(input, options);
+    
+    // Если получили 401 и есть refresh token
     if (response.status === 401 && this.hasRefreshToken()) {
       try {
-        const newToken = await this.refreshAccessToken();
-        headers.set('Authorization', `Bearer ${newToken}`);
-        options.headers = headers;
+        // Обновляем токен
+        token = await this.refreshAccessToken();
+        headers.set('Authorization', `Bearer ${token}`);
+        options = { ...init, headers };
+        
+        // Повторяем запрос
         response = await fetch(input, options);
+        
+        // Если снова 401 - очищаем токены
+        if (response.status === 401) {
+          this.clearTokens();
+        }
       } catch (e) {
         this.clearTokens();
         throw e;

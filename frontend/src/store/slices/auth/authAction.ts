@@ -69,11 +69,7 @@ export const checkAuth = createAsyncThunk<Users, void, { rejectValue: string }>(
 )
 
 // Thunk: подтверждение почты
-export const confirmEmail = createAsyncThunk<
-  void,
-  { token: string },
-  { rejectValue: string }
->(
+export const confirmEmail = createAsyncThunk<void, {token:string}, {rejectValue:string}>(
   'auth/confirmEmail',
   async ({ token }, { rejectWithValue }) => {
     try {
@@ -81,15 +77,14 @@ export const confirmEmail = createAsyncThunk<
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
-      })
+      });
       if (!res.ok) {
-        const msg = await AuthErrorHandler.handle(res)
-        return rejectWithValue(msg)
+        const msg = await AuthErrorHandler.handle(res);
+        return rejectWithValue(msg);
       }
-      // если всё ок — просто возвращаем void
-      return
+      return;
     } catch {
-      return rejectWithValue('Ошибка сети при подтверждении почты')
+      return rejectWithValue('Ошибка сети при подтверждении почты');
     }
   }
-)
+);

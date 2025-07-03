@@ -107,3 +107,6 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             follower_id=validated_data['follower_id'],
             following_id=validated_data['following_id']
         )
+
+class ConfirmEmailSerializer(serializers.Serializer):
+    token = serializers.CharField()

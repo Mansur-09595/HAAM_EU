@@ -6,7 +6,7 @@ from django.utils import timezone
 from .models import Subscription, User
 from .permissions import IsSelfOrAdmin, IsSuperUser
 from .token import CustomTokenObtainPairSerializer
-from .serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer, SubscriptionSerializer
+from .serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer, SubscriptionSerializer, ConfirmEmailSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 
@@ -81,19 +81,22 @@ class UserViewSet(viewsets.ModelViewSet):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     
+
 class ConfirmEmailView(generics.GenericAPIView):
-    """
-    POST /api/users/confirm-email/  { "token": "<токен>" }
-    """
+    permission_classes = [permissions.AllowAny]
+    serializer_class = ConfirmEmailSerializer
+
     def post(self, request, *args, **kwargs):
-        token = request.data.get('token')
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data['token']
+
         try:
             user = User.objects.get(email_confirm_token=token)
         except User.DoesNotExist:
             return Response({'detail': 'Неверный или уже использованный токен'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # опционально: ограничить время жизни, например 24ч
         if timezone.now() - user.email_confirm_sent_at > timezone.timedelta(hours=24):
             return Response({'detail': 'Срок действия токена истёк'},
                             status=status.HTTP_400_BAD_REQUEST)

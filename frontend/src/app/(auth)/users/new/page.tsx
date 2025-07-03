@@ -53,8 +53,9 @@ export default function NewUserPage() {
       await dispatch(loginUser({ email: data.email, password: data.password })).unwrap()
 
       // 3) Редиректим на защищённую страницу, например в профиль
-      router.push(`/profile`)
+      router.push(`/confirm-mail-sent}`)
     } catch (err: unknown) {
+      // Если ошибка из createUser или loginUser, то она уже обработана в этих эк
       // если ошибка из createUser или loginUser
       const errorMessage = err instanceof Error ? err.message : 'Неизвестная ошибка'
       toast({

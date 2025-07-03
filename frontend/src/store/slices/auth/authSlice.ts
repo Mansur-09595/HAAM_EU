@@ -7,6 +7,7 @@ interface AuthState {
   user: Users | null
   accessToken: string | null
   refreshToken: string | null
+
   loading: boolean
   error: string | null
 }
@@ -15,6 +16,7 @@ const initialState: AuthState = {
   user: null,
   accessToken: typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null,
   refreshToken: typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null,
+
   loading: false,
   error: null,
 }

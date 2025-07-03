@@ -139,3 +139,28 @@ export const createUser = createAsyncThunk<
     }
   }
 )
+
+export const confirmEmail = createAsyncThunk<
+  void,
+  { token: string },
+  { rejectValue: string }
+>(
+  'auth/confirmEmail',
+  async ({ token }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`${API_BASE}/users/confirm-email/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+      if (!res.ok) {
+        const msg = await AuthErrorHandler.handle(res)
+        return rejectWithValue(msg)
+      }
+      // если всё ок — просто возвращаем void
+      return
+    } catch {
+      return rejectWithValue('Ошибка сети при подтверждении почты')
+    }
+  }
+)

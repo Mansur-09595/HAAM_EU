@@ -1,11 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { fetchUsers, fetchUserById, createUser, updateUser, deleteUser } from './usersAction'
+import { fetchUsers, fetchUserById, createUser, updateUser, deleteUser, confirmEmail } from './usersAction'
 import { Users } from '@/types/IUsers' // Импортируем типы пользователей
 // import { RootState } from '@/store/store' // Импортируем тип корневого состояния
 
 interface UsersState {
     list: Users[]
     selected: Users | null
+    confirmLoading: boolean
+    confirmError: string | null
+    confirmSuccess: boolean
+
     loading: boolean
     error: string | null
   }
@@ -13,6 +17,10 @@ interface UsersState {
   const initialState: UsersState = {
     list: [],
     selected: null,
+    confirmLoading: false,
+    confirmError: null,
+    confirmSuccess: false,
+
     loading: false,
     error: null,
   }
@@ -20,7 +28,13 @@ interface UsersState {
 const usersSlice = createSlice({
     name: 'users',
     initialState,
-    reducers: {},
+    reducers: {
+      resetConfirmState(state) {
+        state.confirmLoading = false
+        state.confirmError = null
+        state.confirmSuccess = false
+      },
+    },
     extraReducers: builder => {
       builder
         // fetchUsers
@@ -88,9 +102,23 @@ const usersSlice = createSlice({
           state.loading = false
           state.error = action.payload ?? action.error.message ?? null
         })
+        // confirmEmail
+        .addCase(confirmEmail.pending, state => {
+          state.confirmLoading = true
+          state.confirmError = null
+          state.confirmSuccess = false
+        })
+        .addCase(confirmEmail.fulfilled, state => {
+          state.confirmLoading = false
+          state.confirmSuccess = true
+        })
+        .addCase(confirmEmail.rejected, (state, action) => {
+          state.confirmLoading = false
+          state.confirmError = action.payload ?? action.error.message ?? 'Ошибка подтверждения'
+        })
     }
   })
   
 // export const selectUsers = (state: RootState) => state.users.list
-// export const selectUser = (state: RootState) => state.users.selected
+export const { resetConfirmState } = usersSlice.actions
 export default usersSlice.reducer

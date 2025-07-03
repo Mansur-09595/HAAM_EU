@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import Subscription, User
@@ -83,7 +84,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     
 
 class ConfirmEmailView(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = ConfirmEmailSerializer
 
     def post(self, request, *args, **kwargs):

@@ -207,9 +207,13 @@ CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', f"{REDIS_URL}/2")
 
 # Use system CA bundle to trust Let's Encrypt
 COMMON_SSL = {
-    'ssl_cert_reqs': ssl.CERT_REQUIRED,
-    'ssl_ca_certs':   certifi.where(),
+    'ssl_cert_reqs': ssl.CERT_NONE,          # не проверять сертификат
+    'ssl_ca_certs':   certifi.where(),       # (необязательно) путь к CA-bundle
 }
+
+# Celery
+CELERY_BROKER_USE_SSL         = COMMON_SSL
+CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
 
 CELERY_BROKER_USE_SSL = COMMON_SSL
 CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
@@ -231,7 +235,10 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [REDIS_URL],
+            'hosts': [{
+                'url': REDIS_URL.replace('rediss://', 'rediss://'),  # оставляем TLS
+                **COMMON_SSL,
+            }],
         },
     },
 }

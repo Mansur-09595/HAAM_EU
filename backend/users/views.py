@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from django.views.generic import TemplateView
 from django.views import View
+from django.shortcuts import render
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import Subscription, User
@@ -10,7 +11,7 @@ from .permissions import IsSelfOrAdmin, IsSuperUser
 from .token import CustomTokenObtainPairSerializer
 from .serializers import UserSerializer, UserCreateSerializer, UserUpdateSerializer, SubscriptionSerializer, ConfirmEmailSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 User = get_user_model()
 
@@ -162,3 +163,28 @@ class ConfirmEmailTemplateView(View):
                 context['status'] = 'error'
                 context['message'] = 'Неверный или уже использованный токен'
         return render(request, self.template_name, context)
+    
+class ConfirmEmailView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    serializer_class = ConfirmEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        print(f"Request headers: {request.headers}")
+        print(f"Request data: {request.data}")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data['token']
+        try:
+            user = User.objects.get(email_confirm_token=token)
+        except User.DoesNotExist:
+            return Response({'detail': 'Неверный или уже использованный токен'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if timezone.now() - user.email_confirm_sent_at > timezone.timedelta(hours=24):
+            return Response({'detail': 'Срок действия токена истёк'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = True
+        user.email_confirm_token = None
+        user.email_confirm_sent_at = None
+        user.save(update_fields=['is_active', 'email_confirm_token', 'email_confirm_sent_at'])
+        return Response({'detail': 'Email успешно подтверждён'}, status=status.HTTP_200_OK)

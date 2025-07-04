@@ -1,100 +1,95 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useAppDispatch, useAppSelector } from '@/store/store'
-import { fetchUserById, deleteUser } from '@/store/slices/auth/users/usersAction'
-import { fetchMyAds, deleteMyAd, toggleMyAdStatus } from '@/store/slices/ads/myAdsAction/myAdsAction'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Edit, Eye, MoreHorizontal, Trash2, Heart } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,} from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
-import type { Ads } from '@/types/IAds'
+import { useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/store/store';
+import { fetchUserById, deleteUser } from '@/store/slices/auth/users/usersAction';
+import { fetchMyAds, deleteMyAd, toggleMyAdStatus } from '@/store/slices/ads/myAdsAction/myAdsAction';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Edit, Eye, MoreHorizontal, Trash2, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import type { Ads } from '@/types/IAds';
 
 export default function UserDetailPage() {
-  // 1) Получаем id как строку
-  const params = useParams()
-  const idParam = Array.isArray(params.id) ? params.id[0] : params.id
-  const id = idParam ? Number(idParam) : null
+  const params = useParams();
+  const idParam = Array.isArray(params.id) ? params.id[0] : params.id;
+  const id = idParam && !isNaN(Number(idParam)) ? Number(idParam) : null;
 
-  const dispatch = useAppDispatch()
-  const router = useRouter()
+  const dispatch = useAppDispatch();
+  const router = useRouter();
 
-  // 2) Берём из стора профиль, загрузку, ошибку и текущего юзера
-  const user = useAppSelector(state => state.users.selected)
-  const loading = useAppSelector(state => state.users.loading)
-  const error = useAppSelector(state => state.users.error)
-  const currentUser = useAppSelector(state => state.auth.user)
+  const user = useAppSelector(state => state.users.selected);
+  const loading = useAppSelector(state => state.users.loading);
+  const error = useAppSelector(state => state.users.error);
+  const currentUser = useAppSelector(state => state.auth.user);
 
-  const {
-    myItems: listings,
-    loading: adsLoading,
-    error: adsError,
-  } = useAppSelector(state => state.myads)
+  const { myItems: listings, loading: adsLoading, error: adsError } = useAppSelector(state => state.myads);
+  const { toast } = useToast();
 
-  const { toast } = useToast()
-
-  // 3) Загружаем профиль
   useEffect(() => {
-    if (id !== null) dispatch(fetchUserById(id))
-  }, [id, dispatch])
+    // Редирект, если idParam — это 'confirm-email'
+    if (idParam === 'confirm-email') {
+      const token = new URLSearchParams(window.location.search).get('token');
+      router.push(`/confirm-email${token ? `?token=${token}` : ''}`);
+      return;
+    }
+    if (id !== null) {
+      dispatch(fetchUserById(id));
+    }
+  }, [id, idParam, dispatch, router]);
 
-  // Загружаем объявления пользователя после загрузки профиля
   useEffect(() => {
     if (user && id !== null) {
-      dispatch(fetchMyAds(id))
+      dispatch(fetchMyAds(id));
     }
-  }, [user, id, dispatch])
+  }, [user, id, dispatch]);
 
-  // Удалить объявление пользователя
+  if (id === null) {
+    return <p className="text-red-500">Некорректный ID пользователя</p>;
+  }
+  if (!currentUser?.is_staff) return <p>Доступ запрещён</p>;
+  if (loading) return <p>Загрузка…</p>;
+  if (error) return <p className="text-red-500">Ошибка: {error}</p>;
+  if (!user) return <p>Пользователь не найден.</p>;
+
   const onDelete = async (slug: string) => {
     try {
-      await dispatch(deleteMyAd(slug)).unwrap()
-      toast({ title: 'Объявление удалено' })
+      await dispatch(deleteMyAd(slug)).unwrap();
+      toast({ title: 'Объявление удалено' });
     } catch (err) {
       toast({
         title: 'Ошибка',
-        description:
-          typeof err === 'string' ? err : 'Не удалось удалить объявление',
+        description: typeof err === 'string' ? err : 'Не удалось удалить объявление',
         variant: 'destructive',
-      })
+      });
     }
-  }
+  };
 
   const onToggleStatus = async (slug: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'active' ? 'archived' : 'active'
+    const newStatus = currentStatus === 'active' ? 'archived' : 'active';
     try {
-      await dispatch(toggleMyAdStatus({ slug, newStatus })).unwrap()
+      await dispatch(toggleMyAdStatus({ slug, newStatus })).unwrap();
       toast({
         title: newStatus === 'active' ? 'Объявление активировано' : 'Объявление деактивировано',
-      })
+      });
     } catch (err) {
       toast({
         title: 'Ошибка',
-        description:
-          typeof err === 'string'
-            ? err
-            : 'Не удалось изменить статус объявления',
+        description: typeof err === 'string' ? err : 'Не удалось изменить статус объявления',
         variant: 'destructive',
-      })
+      });
     }
-  }
-
-  if (!currentUser?.is_staff) return <p>Access denied</p>
-  if (loading) return <p>Загрузка…</p>
-  if (error)   return <p className="text-red-500">Ошибка: {error}</p>
-  if (!user)  return <p>Пользователь не найден.</p>
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-2">{user.username}</h1>
       <p className="mb-4 text-gray-600">{user.email}</p>
-
-      {/* 4) Кнопки только для своего профиля или админа */}
       {currentUser?.is_staff && (
         <div className="space-x-2">
           <button
@@ -116,32 +111,31 @@ export default function UserDetailPage() {
             Удалить
           </button>
         </div>
-     )}
-
-     <div className="mt-8">
-       <h2 className="text-xl font-bold mb-4">Объявления</h2>
-       {adsLoading && <p>Загрузка объявлений…</p>}
-       {adsError && <p className="text-red-500">Ошибка: {adsError}</p>}
-       {!adsLoading && !adsError && (
-         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-           {listings.length > 0 ? (
-             listings.map((listing) => (
-               <ListingCard
-                 key={listing.id}
-                 listing={listing}
-                 onDelete={onDelete}
-                 onToggleStatus={onToggleStatus}
-                 isAdmin={currentUser?.is_staff === true}
-               />
-             ))
-           ) : (
-             <p className="col-span-full text-center py-10">Нет объявлений</p>
-           )}
-         </div>
-       )}
-     </div>
-   </div>
- )
+      )}
+      <div className="mt-8">
+        <h2 className="text-xl font-bold mb-4">Объявления</h2>
+        {adsLoading && <p>Загрузка объявлений…</p>}
+        {adsError && <p className="text-red-500">Ошибка: {adsError}</p>}
+        {!adsLoading && !adsError && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {listings.length > 0 ? (
+              listings.map((listing) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  onDelete={onDelete}
+                  onToggleStatus={onToggleStatus}
+                  isAdmin={currentUser?.is_staff === true}
+                />
+              ))
+            ) : (
+              <p className="col-span-full text-center py-10">Нет объявлений</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 interface ListingCardProps {

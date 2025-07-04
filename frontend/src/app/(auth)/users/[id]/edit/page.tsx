@@ -53,7 +53,7 @@ export default function EditUserPage() {
     router.push(`/users/${id}`)
   }
 
-  if (!currentUser?.is_staff) return <p>Access denied</p>
+  if (!currentUser?.is_staff) return <p>Access denied 3</p>
   if (loading) return <p>Загрузка…</p>
   if (error)   return <p className="text-red-500">Ошибка: {error}</p>
   if (!user)  return <p>Пользователь не найден.</p>

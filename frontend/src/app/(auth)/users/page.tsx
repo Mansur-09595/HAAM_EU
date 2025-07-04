@@ -16,7 +16,7 @@ export default function UsersPage() {
       dispatch(fetchUsers())
     }, [dispatch])
   
-    if (!currentUser?.is_staff) return <p>Access denied</p>
+    if (!currentUser?.is_staff) return <p>Access denied 1</p>
     if (loading) return <p>Загрузка...</p>
     if (error)   return <p className="text-red-500">Ошибка: {error}</p>
   

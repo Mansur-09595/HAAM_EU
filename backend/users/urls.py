@@ -10,5 +10,4 @@ urlpatterns = [
     path('', include(router.urls)),
     path('token/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('confirm-email/', views.ConfirmEmailView.as_view(), name='confirm_email'),
 ]

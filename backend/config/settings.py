@@ -267,7 +267,7 @@ EMAIL_USE_SSL = False    # SSL на порту 465 не используется
 DEFAULT_FROM_EMAIL  = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@haam.be')
 
 # URL фронтенда, куда мы даём ссылку
-FRONTEND_URL = os.getenv('FRONTEND_URL')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 # Social Auth
 AUTHENTICATION_BACKENDS = (

@@ -84,6 +84,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     
 
 class ConfirmEmailView(generics.GenericAPIView):
+    """POST /api/users/confirm-email/  { "token": "<токен>" }"""
     permission_classes = [AllowAny]
     authentication_classes = []
     serializer_class = ConfirmEmailSerializer
@@ -96,15 +97,21 @@ class ConfirmEmailView(generics.GenericAPIView):
         try:
             user = User.objects.get(email_confirm_token=token)
         except User.DoesNotExist:
-            return Response({'detail': 'Неверный или уже использованный токен'},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Неверный или уже использованный токен'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if timezone.now() - user.email_confirm_sent_at > timezone.timedelta(hours=24):
-            return Response({'detail': 'Срок действия токена истёк'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        if timezone.now() - user.email_confirm_sent_at > timedelta(hours=24):
+            return Response(
+                {'detail': 'Срок действия токена истёк'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         user.is_active = True
         user.email_confirm_token = None
         user.email_confirm_sent_at = None
-        user.save(update_fields=['is_active', 'email_confirm_token', 'email_confirm_sent_at'])
-        return Response({'detail': 'Email успешно подтверждён'}, status=status.HTTP_200_OK)
+        user.save(update_fields=['is_active',
+                                 'email_confirm_token',
+                                 'email_confirm_sent_at'])
+        return Response({'detail': 'Email успешно подтверждён'})

@@ -1,4 +1,3 @@
-# Dockerfile
 # 1) Берём минимальный образ Python 3.10
 FROM python:3.10-slim
 
@@ -17,8 +16,8 @@ RUN apt-get update && apt-get install -y \
     libvips-dev \
   && rm -rf /var/lib/apt/lists/*
 
-# 5) Создаём непривилегированного юзера
-RUN addgroup --system app && adduser --system --ingroup app app
+# 5) Обновляем pip, setuptools и wheel перед установкой зависимостей
+RUN python -m pip install --upgrade pip setuptools wheel
 
 # 6) Копируем зависимости и устанавливаем их вместе с pyvips[binary]
 COPY requirements.txt /backend/
@@ -37,5 +36,5 @@ RUN addgroup --system celery \
 # 9) Переключаемся на неправа пользовател
 USER celery
 
-# 10) По умолчанию запускаем Daphne (ASGI-сервер)
-CMD ["python manage.py migrate --noinput && daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
+# 10) По умолчанию запускаем миграции и Daphne (ASGI-сервер)
+CMD ["sh", "-c", "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application"]

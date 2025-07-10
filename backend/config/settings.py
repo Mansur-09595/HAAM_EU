@@ -212,9 +212,6 @@ COMMON_SSL = {
 }
 
 # Celery
-CELERY_BROKER_USE_SSL         = COMMON_SSL
-CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
-
 CELERY_BROKER_USE_SSL = COMMON_SSL
 CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
 
@@ -235,10 +232,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [{
-                'url': REDIS_URL.replace('rediss://', 'rediss://'),  # оставляем TLS
-                **COMMON_SSL,
-            }],
+            'hosts': [REDIS_URL],
         },
     },
 }

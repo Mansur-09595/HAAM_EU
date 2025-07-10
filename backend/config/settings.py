@@ -234,14 +234,10 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [{
-                'address': os.getenv('REDIS_URL'),
-                **COMMON_SSL,
-            }],
+            'hosts': [REDIS_URL],
         },
     },
 }
-
 # Logging
 LOGGING = {
     'version': 1,

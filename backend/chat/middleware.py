@@ -1,19 +1,18 @@
 from urllib.parse import parse_qs
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from rest_framework_simplejwt.authentication import api_settings
-from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from channels.db import database_sync_to_async
 
 @database_sync_to_async
 def get_user(validated_token):
+    User = get_user_model()
+    user_id = validated_token[api_settings.USER_ID_CLAIM]
     try:
-        user_id = validated_token[api_settings.USER_ID_CLAIM]
-        User = get_user_model()
         return User.objects.get(id=user_id)
-    except Exception as e:
-        print(f"[get_user] Ошибка: {e}")
+    except User.DoesNotExist:
         return AnonymousUser()
 
 class JWTAuthMiddleware:
@@ -28,7 +27,7 @@ class JWTAuthMiddleware:
             try:
                 validated = JWTAuthentication().get_validated_token(token)
                 scope["user"] = await get_user(validated)
-            except InvalidToken as e:
+            except TokenError as e:
                 print(f"[JWTAuthMiddleware] Недействительный токен: {e}")
                 scope["user"] = AnonymousUser()
         else:

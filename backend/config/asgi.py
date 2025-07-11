@@ -17,8 +17,8 @@ import notifications.routing
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,  # все HTTP обрабатывает Django, как обычно
-        "websocket": JWTAuthMiddleware(
-            AuthMiddlewareStack(
+        "websocket": AuthMiddlewareStack(
+            JWTAuthMiddleware(
                 URLRouter(
                     chat.routing.websocket_urlpatterns +
                     notifications.routing.websocket_urlpatterns

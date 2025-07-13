@@ -47,7 +47,8 @@ export default function ProfilePage() {
       email_notifications: true,
       push_notifications: true,
       sms_notifications: false,
-    }
+    },
+    shouldUnregister: true, 
   })
 
   useEffect(() => {
@@ -208,17 +209,17 @@ export default function ProfilePage() {
                   <form id="security-form" onSubmit={handleSubmit(onSubmitSecurity)} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="current_password">Текущий пароль</Label>
-                      <Input id="current_password" type="password" {...register("current_password", { required: "Обязательное поле" })} />
+                      <Input id="current_password" type="password" autoComplete="current-password" {...register("current_password", { required: "Обязательное поле" })} />
                       {errors.current_password && <p className="text-red-500 text-sm">{errors.current_password.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="new_password">Новый пароль</Label>
-                      <Input id="new_password" type="password" {...register("new_password", { required: "Обязательное поле" })} />
+                      <Input id="new_password" type="password" autoComplete="new-password" {...register("new_password", { required: "Обязательное поле" })} />
                       {errors.new_password && <p className="text-red-500 text-sm">{errors.new_password.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirm_password">Подтвердите пароль</Label>
-                      <Input id="confirm_password" type="password" {...register("confirm_password", { required: "Обязательное поле", validate: v => v === watch("new_password") || "Пароли не совпадают" })} />
+                      <Input id="confirm_password" type="password" autoComplete="new-password" {...register("confirm_password", { required: "Обязательное поле", validate: v => v === watch("new_password") || "Пароли не совпадают" })} />
                       {errors.confirm_password && <p className="text-red-500 text-sm">{errors.confirm_password.message}</p>}
                     </div>
                   </form>

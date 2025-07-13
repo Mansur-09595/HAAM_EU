@@ -100,6 +100,9 @@ export class TokenManager {
   static async fetchWithAuth(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers as HeadersInit);
     let token = this.getAccessToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
     let options: RequestInit = { ...init, headers };
   
     // Первый запрос

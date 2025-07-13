@@ -61,6 +61,9 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+
+  // Включаем standalone режим для Docker
+  output: 'standalone',
 }
 
 // Merge user config if exists

@@ -194,7 +194,10 @@ CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS',
     'https://haam-db.onrender.com,http://localhost:3000'
 ).split(',')
-CORS_ALLOW_HEADERS = list(default_headers) + ["authorization"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+  'authorization',
+  'content-type',
+]
 
 #
 # === SSL / TLS for Redis over rediss:// ===

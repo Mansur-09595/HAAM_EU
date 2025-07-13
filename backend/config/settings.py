@@ -91,9 +91,9 @@ DATABASES = {
     }
 }
 
-import dj_database_url
-if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
+# import dj_database_url
+# if os.getenv('DATABASE_URL'):
+#     DATABASES['default'] = dj_database_url.parse(os.getenv('DATABASE_URL'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -112,12 +112,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 
-if USE_S3:
+if USE_S3 and os.getenv('AWS_STORAGE_BUCKET_NAME'):
     INSTALLED_APPS += ['storages']
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")  
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")  
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
     AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
     AWS_QUERYSTRING_AUTH = False
@@ -217,8 +217,9 @@ COMMON_SSL = {
 }
 
 # Celery
-CELERY_BROKER_USE_SSL = COMMON_SSL
-CELERY_RESULT_BACKEND_USE_SSL = COMMON_SSL
+# Отключаем SSL для локальной разработки
+CELERY_BROKER_USE_SSL = False
+CELERY_RESULT_BACKEND_USE_SSL = False
 
 CELERY_ACCEPT_CONTENT    = ['json']
 CELERY_TASK_SERIALIZER   = 'json'
@@ -232,14 +233,13 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Channels layer over Redis + TLS
+# Channels layer over Redis
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             'hosts': [{
-                'address': os.getenv('REDIS_URL'),  # без ?ssl_cert_reqs=…
-                **COMMON_SSL,                      # разворачиваем ssl_cert_reqs и ssl_ca_certs
+                'address': os.getenv('REDIS_URL', 'redis://redis:6379/0'),
             }],
         },
     },
@@ -307,9 +307,9 @@ SPECTACULAR_SETTINGS = {
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Security
-SECURE_SSL_REDIRECT   = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE    = True
+SECURE_SSL_REDIRECT   = False  # Отключаем для локальной разработки
+SESSION_COOKIE_SECURE = False  # Отключаем для локальной разработки
+CSRF_COOKIE_SECURE    = False  # Отключаем для локальной разработки
 
 # Staticfiles via WhiteNoise
 #STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"

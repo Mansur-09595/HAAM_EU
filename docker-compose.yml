@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # 1) PostgreSQL
   db:
@@ -33,7 +31,6 @@ services:
       dockerfile: Dockerfile
     command: >
       sh -c "
-      python manage.py makemigrations &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
       daphne -b 0.0.0.0 -p 8000 config.asgi:application
@@ -55,6 +52,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
 
   # 4) Celery Worker
   celery:
@@ -74,6 +72,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
 
   # 5) Celery Beat (планировщик периодических задач)
   celery-beat:
@@ -93,6 +92,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
 
   # 6) Next.js Frontend
   frontend:

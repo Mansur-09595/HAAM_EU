@@ -33,8 +33,11 @@ COPY . /backend/
 RUN addgroup --system celery \
  && adduser --system --ingroup celery celery
 
-# 9) Переключаемся на неправа пользовател
+# 9) Даем права на запись в папку проекта
+RUN chown -R celery:celery /backend
+
+# 10) Переключаемся на пользователя celery
 USER celery
 
-# 10) По умолчанию запускаем миграции и Daphne (ASGI-сервер)
+# 11) По умолчанию запускаем миграции и Daphne (ASGI-сервер)
 CMD ["sh", "-c", "python manage.py migrate --noinput && daphne -b 0.0.0.0 -p 8000 config.asgi:application"]

@@ -18,10 +18,10 @@ export function useNotificationWebSocket(userId: number | null) {
         return
       }
 
-      const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'haam-db.onrender.com'
+      const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'localhost'
       const token = (await TokenManager.getValidAccessToken()) ?? ''
       if (cancelled) return
-      socket = new WebSocket(`wss://${host}/ws/notifications/${userId}/?token=${token}`)
+      socket = new WebSocket(`ws://${host}:8000/ws/notifications/${userId}/?token=${token}`)
       wsRef.current = socket
 
       socket.onmessage = (event) => {

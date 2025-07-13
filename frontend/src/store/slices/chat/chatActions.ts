@@ -11,7 +11,7 @@ import {
   IPaginatedConversations,
 } from '@/types/chatTypes'
 
-const API_BASE = 'https://haam-db.onrender.com/api/chat'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ? `${process.env.NEXT_PUBLIC_API_BASE}/chat` : 'http://localhost:8000/api/chat'
 
 // 1) Получить все беседы текущего пользователя
 export const fetchConversations = createAsyncThunk<
@@ -135,7 +135,7 @@ export const markConversationRead = createAsyncThunk<
   async (conversationId, { rejectWithValue }) => {
     try {
       const res = await TokenManager.fetchWithAuth(
-        `https://haam-db.onrender.com/api/notifications/${conversationId}/mark_read/`,
+        `${process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'}/notifications/${conversationId}/mark_read/`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

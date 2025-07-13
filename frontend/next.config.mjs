@@ -20,8 +20,6 @@ try {
 const nextConfig = {
   // Enable React strict mode in production
   reactStrictMode: true,
-  // Use SWC for faster minification
-  swcMinify: true,
 
   eslint: {
     ignoreDuringBuilds: true,
@@ -33,14 +31,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
     // Only host without protocol
-    domains: ['haam-db.onrender.com'],
+    domains: ['localhost', 'haam-db.onrender.com'],
   },
 
   async rewrites() {
     return [
       {
         source: '/media/:path*',
-        destination: 'https://haam-db.onrender.com/media/:path*',
+        destination: 'http://localhost:8000/media/:path*',
       },
     ]
   },

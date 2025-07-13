@@ -13,7 +13,7 @@ export const fetchAdsByCategory = createAsyncThunk<
 >(
   'adsByCategory/fetchByCategory',
   async (slug, { rejectWithValue }) => {
-    const res = await fetch(`https://haam-db.onrender.com/api/listings/?category_slug=${encodeURIComponent(slug)}`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'}/listings/?category_slug=${encodeURIComponent(slug)}`)
     if (!res.ok) {
       return rejectWithValue(`Ошибка ${res.status}: не удалось загрузить объявления`)
     }

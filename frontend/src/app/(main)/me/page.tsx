@@ -2,7 +2,7 @@ import { Ads } from '@/types/IAds'
 import ListingGrid from '@/components/ListingGrid' // обновлённый импорт
 
 async function getAds(): Promise<Ads[]> {
-  const res = await fetch('https://haam-db.onrender.com/api/ads', { cache: 'no-store' })
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'}/ads`, { cache: 'no-store' })
   return await res.json()
 }
 

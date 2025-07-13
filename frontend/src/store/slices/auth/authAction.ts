@@ -3,7 +3,7 @@ import type { Users } from '@/types/IUsers'
 import { TokenManager } from '@/utils/tokenUtils'
 import { AuthErrorHandler } from '@/utils/authErrorHandler'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'https://haam-db.onrender.com/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'
 
 // Thunk: логин (получаем access+refresh+user)
 export const loginUser = createAsyncThunk<

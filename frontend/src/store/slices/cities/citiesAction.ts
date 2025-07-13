@@ -14,7 +14,7 @@ export const fetchBelgianCities = createAsyncThunk<City[],void,{ rejectValue: st
 >('cities/fetchBelgian', async (_, { rejectWithValue }) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/listings/belgian-cities/`
+        `${process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000/api'}/listings/belgian-cities/`
       )
 
       if (!res.ok) {

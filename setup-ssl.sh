@@ -29,7 +29,7 @@ log_error() {
 
 # Проверяем аргументы
 if [ $# -eq 0 ]; then
-    log_error "Использование: $0 <your-domain.com>"
+    log_error "Использование: $0 <haam.be>"
     exit 1
 fi
 
@@ -99,7 +99,7 @@ sudo chmod 600 ssl/key.pem
 
 # 7. Обновляем nginx.conf с правильным доменом
 log_info "Обновляем nginx.conf..."
-sed -i "s/your-domain.com/$DOMAIN/g" nginx.conf
+sed -i "s/haam.be/$DOMAIN/g" nginx.conf
 
 # 8. Удаляем временную конфигурацию
 log_info "Удаляем временную конфигурацию..."

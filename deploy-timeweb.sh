@@ -85,32 +85,40 @@ if [ ! -f "backend/.env" ]; then
 # Database
 DB_NAME=avito_db
 DB_USER=avito_user
-DB_PASSWORD=$(openssl rand -base64 32)
+DB_PASSWORD=avito_password_123
+DB_HOST=db
+DB_PORT=5432
 
-# Django
-SECRET_KEY=$(python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())')
+SECRET_KEY=KXDc61W9RVEpPH+Yl2i4Kl4h6BBAjoYf93isFvSXrt1mCErt50mIU91jKDj8dMQO
 DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com,www.your-domain.com
+ALLOWED_HOSTS=www.haam.cloud,localhost,127.0.0.1
 
-# Celery
+REDIS_URL=redis://redis:6379/0
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
 
-# Email (настройте под ваши нужды)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=haam.information@gmail.com
-EMAIL_HOST_PASSWORD=wpojjsyazqipwcsf
-
-# Geonames
-GEONAMES_USERNAME=mansur_musaev_1997
-
-# AWS S3 (опционально)
+USE_S3=True
 AWS_ACCESS_KEY_ID=AKIAVSAPPUV6C5BNVPEP
 AWS_S3_REGION_NAME=eu-north-1
 AWS_SECRET_ACCESS_KEY=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
 AWS_STORAGE_BUCKET_NAME=haam-bucket-media
+
+DEFAULT_FROM_EMAIL=noreply@haam.be
+EMAIL_HOST=smtp.gmail.com
+EMAIL_HOST_PASSWORD=wpojjsyazqipwcsf
+EMAIL_HOST_USER=haam.information@gmail.com
+EMAIL_PORT=587
+
+GEONAMES_USERNAME=mansur_musaev_1997
+
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+CSRF_TRUSTED_ORIGINS=http://localhost:3000
+
+FRONTEND_URL=http://localhost:8000
+
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE=http://localhost:8000/api
+NEXT_PUBLIC_WS_BACKEND_HOST=localhost
 EOF
     log_info "backend/.env создан. Не забудьте настроить переменные!"
 else

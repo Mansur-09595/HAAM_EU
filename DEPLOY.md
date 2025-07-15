@@ -36,7 +36,7 @@ sudo reboot
 
 ```bash
 # Клонируем проект
-git clone <your-repository-url>
+git clone https://github.com/Mansur-09595/HAAM_EU
 cd my-project
 
 # Даем права на выполнение скриптов
@@ -58,7 +58,7 @@ DB_PASSWORD=your_very_secure_password_here
 # Django
 SECRET_KEY=your_django_secret_key_here_make_it_long_and_random
 DEBUG=False
-ALLOWED_HOSTS=your-domain.com,www.your-domain.com,localhost,127.0.0.1
+ALLOWED_HOSTS=haam.be,www.haam.be,localhost,127.0.0.1
 
 # AWS S3 (если используете)
 AWS_ACCESS_KEY_ID=your_aws_key
@@ -81,7 +81,7 @@ EMAIL_HOST_PASSWORD=your-app-password
 Создайте файл `frontend/.env`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://your-domain.com:8000
+NEXT_PUBLIC_API_URL=http://haam.be:8000
 NODE_ENV=production
 ```
 
@@ -137,7 +137,7 @@ docker-compose exec backend python manage.py createsuperuser
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com www.your-domain.com;
+    server_name haam.be www.haam.be;
 
     # Frontend
     location / {
@@ -195,7 +195,7 @@ sudo systemctl restart nginx
 sudo apt install -y certbot python3-certbot-nginx
 
 # Получаем SSL сертификат
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --nginx -d haam.be -d www.haam.be
 
 # Настраиваем автообновление
 sudo crontab -e

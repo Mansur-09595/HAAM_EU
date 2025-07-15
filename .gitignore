@@ -8,6 +8,9 @@
 # Docker
 .dockerignore
 
+
+deploy-timeweb.sh
+
 # Logs
 *.log
 npm-debug.log*

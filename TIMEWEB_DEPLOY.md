@@ -53,7 +53,7 @@ sudo usermod -aG docker $USER
 
 ```bash
 # Клонируем проект
-git clone <your-repository-url>
+git clone https://github.com/Mansur-09595/HAAM_EU
 cd my-project
 
 # Даем права на выполнение скриптов
@@ -75,7 +75,7 @@ DB_PASSWORD=your_very_secure_password_here
 # Django
 SECRET_KEY=your_django_secret_key_here_make_it_long_and_random
 DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1,your-domain.com,www.your-domain.com
+ALLOWED_HOSTS=localhost,127.0.0.1,haam.be,www.haam.be
 
 # Celery
 CELERY_BROKER_URL=redis://redis:6379/0
@@ -99,7 +99,7 @@ AWS_STORAGE_BUCKET_NAME=your_bucket_name
 Создайте файл `frontend/.env`:
 
 ```bash
-NEXT_PUBLIC_API_URL=https://your-domain.com
+NEXT_PUBLIC_API_URL=https://haam.be
 NODE_ENV=production
 ```
 
@@ -135,7 +135,7 @@ docker-compose -f docker-compose.prod.yml ps
 ```bash
 # Настройте SSL для вашего домена
 chmod +x setup-ssl.sh
-./setup-ssl.sh your-domain.com
+./setup-ssl.sh haam.be
 ```
 
 ### Ручная настройка
@@ -145,12 +145,12 @@ chmod +x setup-ssl.sh
 sudo apt install -y certbot python3-certbot-nginx
 
 # Получаем сертификат
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --nginx -d haam.be -d www.haam.be
 
 # Создаем директорию для сертификатов
 mkdir -p ssl
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem ssl/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem ssl/key.pem
+sudo cp /etc/letsencrypt/live/haam.be/fullchain.pem ssl/cert.pem
+sudo cp /etc/letsencrypt/live/haam.be/privkey.pem ssl/key.pem
 sudo chown $USER:$USER ssl/cert.pem ssl/key.pem
 ```
 
@@ -308,9 +308,9 @@ SELECT pg_reload_conf();
 ## 🚀 Готово!
 
 Ваше приложение должно быть доступно по адресу:
-- Frontend: `https://your-domain.com`
-- Backend API: `https://your-domain.com/api/`
-- Admin panel: `https://your-domain.com/admin/`
+- Frontend: `https://haam.be`
+- Backend API: `https://haam.be/api/`
+- Admin panel: `https://haam.be/admin/`
 
 ### Проверка работоспособности
 
@@ -322,7 +322,7 @@ docker-compose ps
 docker-compose logs --tail=50
 
 # Проверьте доступность сайта
-curl -I https://your-domain.com
+curl -I https://haam.be
 ```
 
 ## 📞 Поддержка

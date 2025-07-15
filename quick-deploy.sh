@@ -34,7 +34,7 @@ log_step() {
 
 # Проверяем аргументы
 if [ $# -eq 0 ]; then
-    log_error "Использование: $0 <your-domain.com> [--ssl] [--prod]"
+    log_error "Использование: $0 <haam.be> [--ssl] [--prod]"
     echo "Примеры:"
     echo "  $0 mysite.com                    # Базовый деплой"
     echo "  $0 mysite.com --ssl              # С SSL сертификатами"
@@ -254,7 +254,7 @@ EOF
     sudo chmod 600 ssl/key.pem
 
     # Обновляем nginx.conf с правильным доменом
-    sed -i "s/your-domain.com/$DOMAIN/g" nginx.conf
+    sed -i "s/haam.be/$DOMAIN/g" nginx.conf
 
     # Удаляем временную конфигурацию
     sudo rm -f /etc/nginx/sites-enabled/temp-ssl

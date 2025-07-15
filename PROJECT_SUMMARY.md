@@ -47,7 +47,7 @@ my-project/
 
 ### 1. Клонировать проект
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Mansur-09595/HAAM_EU
 cd my-project
 ```
 
@@ -60,13 +60,13 @@ DB_USER=avito_user
 DB_PASSWORD=your_secure_password
 SECRET_KEY=your_django_secret_key
 DEBUG=False
-ALLOWED_HOSTS=your-domain.com,localhost,127.0.0.1
+ALLOWED_HOSTS=haam.be,localhost,127.0.0.1
 CELERY_BROKER_URL=redis://redis:6379/0
 ```
 
 **frontend/.env:**
 ```bash
-NEXT_PUBLIC_API_URL=http://your-domain.com:8000
+NEXT_PUBLIC_API_URL=http://haam.be:8000
 NODE_ENV=production
 ```
 
@@ -80,9 +80,9 @@ docker-compose up -d --build
 ```
 
 ### 4. Проверить работу
-- Frontend: http://your-domain.com:3000
-- Backend API: http://your-domain.com:8000
-- Admin Panel: http://your-domain.com:8000/admin
+- Frontend: http://haam.be:3000
+- Backend API: http://haam.be:8000
+- Admin Panel: http://haam.be:8000/admin
 
 ## 🔍 Проверка готовности
 

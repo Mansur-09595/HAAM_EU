@@ -1,0 +1,173 @@
+version: '3.8'
+
+services:
+  # 1) PostgreSQL
+  db:
+    image: postgres:14
+    container_name: avito_postgres_prod
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "127.0.0.1:5432:5432"  # Только локальный доступ
+    networks:
+      - app_network
+
+  # 2) Redis
+  redis:
+    image: redis:7-alpine
+    container_name: avito_redis_prod
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"  # Только локальный доступ
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+
+  # 3) Django + Daphne (ASGI)
+  backend:
+    container_name: avito_backend_prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      daphne -b 0.0.0.0 -p 8000 config.asgi:application
+      "
+    volumes:
+      - ./backend:/backend
+      - static_volume:/backend/staticfiles
+      - media_volume:/backend/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - USE_S3=TRUE
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 4) Celery Worker
+  celery:
+    container_name: avito_celery_prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A config worker --loglevel=INFO --concurrency=2
+    volumes:
+      - ./backend:/backend
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    networks:
+      - app_network
+
+  # 5) Celery Beat
+  celery-beat:
+    container_name: avito_celery_beat_prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A config beat --loglevel=INFO
+    volumes:
+      - ./backend:/backend
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    networks:
+      - app_network
+
+  # 6) Next.js Frontend
+  frontend:
+    container_name: avito_frontend_prod
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    env_file:
+      - frontend/.env
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 7) Nginx (опционально для продакшн)
+  nginx:
+    image: nginx:alpine
+    container_name: avito_nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - app_network
+
+# Общие именованные тома
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+# Сеть для изоляции контейнеров
+networks:
+  app_network:
+    driver: bridge 

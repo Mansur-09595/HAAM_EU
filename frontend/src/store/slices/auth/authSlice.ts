@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { loginUser, checkAuth, refreshToken, confirmEmail } from './authAction'
+import { loginUser, checkAuth, refreshToken } from './authAction'
 import { Users } from '@/types/IUsers'
 import { TokenManager } from '@/utils/tokenUtils'
 
@@ -84,20 +84,20 @@ const authSlice = createSlice({
 
     })
      // confirmEmail
-     builder
-     .addCase(confirmEmail.pending, state => {
-       state.confirmLoading = true
-       state.confirmError = null
-       state.confirmSuccess = false
-     })
-     .addCase(confirmEmail.fulfilled, state => {
-       state.confirmLoading = false
-       state.confirmSuccess = true
-     })
-     .addCase(confirmEmail.rejected, (state, action) => {
-       state.confirmLoading = false
-       state.confirmError = action.payload ?? action.error.message ?? 'Ошибка подтверждения'
-     })
+    //  builder
+    //  .addCase(confirmEmail.pending, state => {
+    //    state.confirmLoading = true
+    //    state.confirmError = null
+    //    state.confirmSuccess = false
+    //  })
+    //  .addCase(confirmEmail.fulfilled, state => {
+    //    state.confirmLoading = false
+    //    state.confirmSuccess = true
+    //  })
+    //  .addCase(confirmEmail.rejected, (state, action) => {
+    //    state.confirmLoading = false
+    //    state.confirmError = action.payload ?? action.error.message ?? 'Ошибка подтверждения'
+    //  })
   },
 })
 

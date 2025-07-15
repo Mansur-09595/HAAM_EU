@@ -24,6 +24,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         # 🔥 Добавляем пользователя в ответ
-        data['user'] = UserSerializer(user, context=self.context).data
+        data['user'] = UserSerializer(user, context=self.context).data # type: ignore
 
         return data

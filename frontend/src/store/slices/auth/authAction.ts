@@ -68,23 +68,23 @@ export const checkAuth = createAsyncThunk<Users, void, { rejectValue: string }>(
   }
 )
 
-// Thunk: подтверждение почты
-export const confirmEmail = createAsyncThunk<void, { token: string }, { rejectValue: string }>(
-  'auth/confirmEmail',
-  async ({ token }, { rejectWithValue }) => {
-    try {
-      const res = await fetch(`${API_BASE}/users/confirm-email/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      });
-      if (!res.ok) {
-        const msg = await AuthErrorHandler.handle(res);
-        return rejectWithValue(msg);
-      }
-      return;
-    } catch {
-      return rejectWithValue('Ошибка сети при подтверждении почты');
-    }
-  }
-);
+// // Thunk: подтверждение почты
+// export const confirmEmail = createAsyncThunk<void, { token: string }, { rejectValue: string }>(
+//   'auth/confirmEmail',
+//   async ({ token }, { rejectWithValue }) => {
+//     try {
+//       const res = await fetch(`${API_BASE}/users/confirm-email/`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ token }),
+//       });
+//       if (!res.ok) {
+//         const msg = await AuthErrorHandler.handle(res);
+//         return rejectWithValue(msg);
+//       }
+//       return;
+//     } catch {
+//       return rejectWithValue('Ошибка сети при подтверждении почты');
+//     }
+//   }
+// );

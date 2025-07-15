@@ -16,6 +16,12 @@
       </a>
     </div>
 
+    <script>
+      // Выводим статус и сообщение в консоль браузера
+      console.log('confirm_email status:', '{{ status }}');
+      console.log('confirm_email message:', '{{ message }}');
+    </script>
+
     <!-- Контейнер сообщения -->
     {% if status == 'success' %}
       <div class="text-center space-y-4">

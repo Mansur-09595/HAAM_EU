@@ -7,7 +7,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView
 )
-from users.views import CustomTokenObtainPairView, ConfirmEmailView, ConfirmEmailTemplateView
+from users.views import CustomTokenObtainPairView, ConfirmEmailTemplateView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
@@ -20,7 +20,7 @@ urlpatterns = [
     path('api/chat/', include('chat.urls')),
     path('api/notifications/', include('notifications.urls')),
      # ... ваши API-роуты
-    path('api/users/confirm-email/', ConfirmEmailView.as_view(), name='api-confirm-email'),
+    # path('api/users/confirm-email/', ConfirmEmailView.as_view(), name='api-confirm-email'),
     # **шаблонный** путь для браузера
     path('confirm-email/', ConfirmEmailTemplateView.as_view(), name='confirm-email-page'),
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

@@ -8,6 +8,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { Toaster } from '@/components/ui/toaster'
 import CookieBanner from '@/components/CookieBanner'
+import React from 'react';
 
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 

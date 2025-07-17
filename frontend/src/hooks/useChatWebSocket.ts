@@ -24,8 +24,8 @@ export function useChatWebSocket(
 
       const token = (await TokenManager.getValidAccessToken()) ?? ''
       if (cancelled) return
-      const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'localhost'
-const url = `ws://${host}:8000/ws/chat/${userId}/?token=${token}`
+      const host = process.env.NEXT_PUBLIC_WS_BACKEND_HOST ?? 'localhost:8000'
+      const url = `wss://${host}/ws/chat/${userId}/?token=${token}`
       console.log('[WebSocket] connecting to', url)
 
       socket = new WebSocket(url)

@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-key-for-development')
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,8000').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'channels',
     'social_django',
     'drf_spectacular',
+    'django_celery_beat',
 
     # Local apps
     'users.apps.UsersConfig',
@@ -215,6 +216,8 @@ COMMON_SSL = {
     'ssl_cert_reqs': ssl.CERT_REQUIRED,
     'ssl_ca_certs': certifi.where(),
 }
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # Celery
 # Отключаем SSL для локальной разработки

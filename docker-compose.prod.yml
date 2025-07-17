@@ -41,10 +41,6 @@ services:
       python manage.py collectstatic --noinput &&
       daphne -b 0.0.0.0 -p 8000 config.asgi:application
       "
-    # volumes:
-    #   - ./backend:/backend
-    #   - static_volume:/backend/staticfiles
-    #   - media_volume:/backend/media
     ports:
       - "8000:8000"
     depends_on:
@@ -56,7 +52,7 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
       - USE_S3=True
-      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,8000
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,haam.be,www.haam.be,46.149.66.110,8000
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}

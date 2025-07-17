@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-key-for-development')
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 USE_S3 = os.getenv("USE_S3", "false").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,8000').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,backend,8000,haam.be').split(',')
 
 # Application definition
 INSTALLED_APPS = [

@@ -17,7 +17,7 @@ CELERY_BROKER_URL=redis://redis:6379/0
 
 **frontend/.env:**
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE=/api
 NODE_ENV=production
 ```
 

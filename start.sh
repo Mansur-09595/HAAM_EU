@@ -30,7 +30,7 @@ fi
 
 if [ ! -f "frontend/.env" ]; then
     echo "⚠️  Файл frontend/.env не найден. Создайте его:"
-    echo "NEXT_PUBLIC_API_URL=http://localhost:8000"
+    echo "NEXT_PUBLIC_API_BASE=/api"
     echo "NODE_ENV=production"
     exit 1
 fi

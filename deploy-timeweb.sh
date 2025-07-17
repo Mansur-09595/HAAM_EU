@@ -114,11 +114,11 @@ GEONAMES_USERNAME=mansur_musaev_1997
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 CSRF_TRUSTED_ORIGINS=http://localhost:3000
 
-FRONTEND_URL=http://localhost:8000
+FRONTEND_URL=http://haam.be
 
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_API_BASE=http://localhost:8000/api
-NEXT_PUBLIC_WS_BACKEND_HOST=localhost
+NEXT_PUBLIC_API_BASE=/api
+NEXT_PUBLIC_WS_BACKEND_HOST=haam.be
+
 EOF
     log_info "backend/.env создан. Не забудьте настроить переменные!"
 else
@@ -129,7 +129,7 @@ fi
 if [ ! -f "frontend/.env" ]; then
     log_warn "Создаем frontend/.env файл..."
     cat > frontend/.env << EOF
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_BASE=/api
 NODE_ENV=production
 EOF
     log_info "frontend/.env создан"
